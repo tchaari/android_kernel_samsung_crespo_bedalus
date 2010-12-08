@@ -645,8 +645,10 @@ inline void update_rq_clock(struct rq *rq)
 	int cpu = cpu_of(rq);
 	u64 irq_time;
 
-	if (!rq->skip_clock_update)
-		rq->clock = sched_clock_cpu(cpu_of(rq));
+	if (rq->skip_clock_update)
+		return;
+
+	rq->clock = sched_clock_cpu(cpu);
 	irq_time = irq_time_cpu(cpu);
 	if (rq->clock - irq_time > rq->clock_task)
 		rq->clock_task = rq->clock - irq_time;
@@ -3913,6 +3915,7 @@ need_resched_nonpreemptible:
 		rq->nr_switches++;
 		rq->curr = next;
 		++*switch_count;
+		WARN_ON_ONCE(test_tsk_need_resched(next));
 
 		context_switch(rq, prev, next); /* unlocks the rq */
 		/*

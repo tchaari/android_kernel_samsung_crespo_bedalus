@@ -32,6 +32,7 @@
 #include <linux/tick.h>
 #include <linux/uaccess.h>
 #include <linux/mfd/pmic8058.h>
+#include <linux/wakelock.h>
 #include <linux/seq_file.h>
 #include <linux/console.h>
 #include <linux/cpufreq.h>
@@ -854,6 +855,12 @@ int msm_pm_idle_prepare(struct cpuidle_device *dev)
 				allow = false;
 				break;
 			}
+#ifdef CONFIG_HAS_WAKELOCK
+			if (has_wake_lock(WAKE_LOCK_IDLE)) {
+				allow = false;
+				break;
+			}
+#endif
 			/* fall through */
 
 		case MSM_PM_SLEEP_MODE_POWER_COLLAPSE_STANDALONE:

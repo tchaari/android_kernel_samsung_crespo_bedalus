@@ -290,8 +290,7 @@ InitWait:
 			ret = xenbus_printf(XBT_NIL, info->xbdev->nodename,
 					    "request-abs-pointer", "1");
 			if (ret)
-				printk(KERN_WARNING
-				       "xenkbd: can't request abs-pointer");
+				pr_warning("can't request abs-pointer\n");
 		}
 		xenbus_switch_state(dev, XenbusStateConnected);
 		break;

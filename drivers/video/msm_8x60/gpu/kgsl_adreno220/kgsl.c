@@ -1379,6 +1379,13 @@ static int kgsl_ioctl_map_user_mem(struct kgsl_process_private *private,
 	/* ensure that MMU mappings are at page boundary */
 	entry->memdesc.physaddr = start + (param.offset & KGSL_PAGEMASK);
 	if (param.memtype != KGSL_USER_MEM_TYPE_PMEM) {
+
+	if (entry->memdesc.physaddr == 0) {
+		KGSL_DRV_ERR("Error: memdesc.phyaddr is null.\n");
+		result = -EINVAL;
+		goto error_free_entry;
+	}
+
 		result = kgsl_mmu_map(private->pagetable,
 				entry->memdesc.physaddr, entry->memdesc.size,
 				GSL_PT_PAGE_RV | GSL_PT_PAGE_WV,
@@ -1392,6 +1399,7 @@ static int kgsl_ioctl_map_user_mem(struct kgsl_process_private *private,
 				&entry->memdesc.gpuaddr,
 				KGSL_MEMFLAGS_ALIGN4K | KGSL_MEMFLAGS_CONPHYS);
 	}
+
 	if (result)
 		goto error_free_entry;
 

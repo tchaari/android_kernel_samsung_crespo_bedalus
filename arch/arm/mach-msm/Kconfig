@@ -2,33 +2,8 @@ if ARCH_MSM
 
 choice
 	prompt "Qualcomm MSM SoC Type"
-	default ARCH_MSM7X00A
+	default ARCH_MSM8X60
 
-config ARCH_MSM7X00A
-	bool "MSM7x00A / MSM7x01A"
-	select ARCH_MSM_ARM11
-	select CPU_V6
-
-config ARCH_MSM7225
-        bool "Qualcomm MSM7225"
-        select ARCH_MSM_ARM11
-        select CPU_V6
-
-config ARCH_MSM7227
-	bool "Qualcomm MSM7227"
-        select ARCH_MSM_ARM11
-        select CPU_V6
-
-config ARCH_MSM7X30
-	bool "MSM7x30"
-	select ARCH_MSM_SCORPION
-	select CPU_V7
-
-config ARCH_QSD8X50
-	bool "QSD8x50"
-	select ARCH_MSM_SCORPION
-	select CPU_V7
-	select VERIFY_PERMISSION_FAULT
 config ARCH_MSM8X60
 	bool "MSM8X60"
 	select ARCH_MSM_SCORPIONMP
@@ -58,12 +33,6 @@ config ARCH_MSM8X60_LTE
 
 endchoice
 
-config ARCH_MSM_ARM11
-	bool
-
-config ARCH_MSM_SCORPION
-	bool
-
 config  ARCH_MSM_SCORPIONMP
 	bool
 
@@ -85,77 +54,10 @@ config MSM_REMOTE_SPINLOCK_LDREX
 config MSM_ADM3
 	bool
 
-config MSM_MDP22
-	bool
-	depends on ARCH_MSM7X00A
-	default y
-
-config MSM_MDP30
-	bool
-	depends on ARCH_MSM7225
-	default y
-
-
-config MSM_MDP302
-	bool
-	depends on ARCH_MSM7227
-	default y
-
-config MSM_MDP31
-	bool
-	depends on ARCH_QSD8X50
-	default y
-
 config MSM_MDP40
 	bool
 	depends on ARCH_MSM7X30 || ARCH_MSM8X60
 	default y
-
-config TURBO_MODE
-	bool "Turbo mode"
-	depends on ARCH_MSM7225 || ARCH_MSM7X00A
-	default n
-	help
-	  This option is used to indicate hardware support for running the
-	  memory bus at a higher speed.(only for 7X00A/7225)
-
-config PERFLOCK
-	depends on CPU_FREQ
-	depends on ARCH_MSM8X60 || ARCH_QSD8X50 || ARCH_MSM7X30 || ARCH_MSM7X00A || ARCH_MSM7227 || ARCH_MSM7225
-	default n
-	bool "HTC Performance Lock"
-
-config PERFLOCK_BOOT_LOCK
-	depends on PERFLOCK
-	depends on ARCH_MSM8X60 || ARCH_QSD8X50 || ARCH_MSM7X30 || ARCH_MSM7X00A || ARCH_MSM7227 || ARCH_MSM7225
-	default n
-	bool "Boot Time Performance Lock"
-
-config PERFLOCK_SCREEN_POLICY
-	depends on PERFLOCK
-	depends on ARCH_MSM8X60 || ARCH_QSD8X50 || ARCH_MSM7X00A || ARCH_MSM7227 || ARCH_MSM7225
-	default n
-	bool "Change Cpufreq Policy while Screen ON/OFF"
-
-config PERFLOCK_SCREEN_ON_MIN
-	depends on PERFLOCK_SCREEN_POLICY
-	int "Minimum speed while screen on"
-	default MSM_CPU_FREQ_ONDEMAND_MIN
-
-config PERFLOCK_SCREEN_ON_MAX
-	depends on PERFLOCK_SCREEN_POLICY
-	int "Maximum speed while screen on"
-	default MSM_CPU_FREQ_ONDEMAND_MAX
-
-config PERFLOCK_SCREEN_OFF_MIN
-	depends on PERFLOCK_SCREEN_POLICY
-	int "Minimum speed while screen off"
-	default MSM_CPU_FREQ_ONDEMAND_MIN
-
-config PERFLOCK_SCREEN_OFF_MAX
-	depends on PERFLOCK_SCREEN_POLICY
-	int "Maximum speed while screen off"
-	default MSM_CPU_FREQ_ONDEMAND_MIN
 
 config MSM_AMSS_VERSION
 	int
@@ -249,455 +151,15 @@ config FORCE_WARNING_AS_ERROR
 	bool "Force warning as error"
 	default n
 
-config ARCH_MSM7230
-	bool "MSM7230"
-	depends on ARCH_MSM7X30
-
-config ARCH_MSM7630
-	bool "MSM7630"
-	depends on ARCH_MSM7X30
-
 comment "MSM Board Type"
 
-config MACH_HALIBUT
-	depends on ARCH_MSM7X00A
-	default n
-	bool "Halibut Board (QCT SURF7201A)"
-	help
-	  Support for the Qualcomm SURF7201A eval board.
-
-config MACH_TROUT
-	depends on ARCH_MSM7X00A
-	default n
-	bool "Trout (HTC Dream, T-Mobile G1, Google ADP1)"
-	help
-	 Select this to support HTC Dream, T-Mobile G1, Google ADP1.
-
-config MACH_SWORDFISH
-	depends on ARCH_QSD8X50
-	default n
-	bool "Swordfish Board (QCT SURF8250)"
-	help
-	  Support for the Qualcomm SURF8250 eval board.
-
-config MACH_SAPPHIRE
-	depends on ARCH_MSM7X00A
-	default n
-	bool "Sapphire"
-	help
-	  Support for the HTC Sapphire device.
-
-config MACH_HERO
-	depends on ARCH_MSM7X00A
-	default n
-	bool "Hero"
-	help
-	  Support for the HTC Hero device.
-
-config MACH_DESIREC
-        depends on ARCH_MSM7X00A
-        default n
-        bool "Hero"
-        help
-          Support for the HTC DesireC device.
-
-config MACH_HEROC
-        depends on ARCH_MSM7X00A
-        default n
-        bool "Hero"
-        help
-          Support for the HTC HeroC device.
-
-
-config MACH_ORCA
-	depends on ARCH_QSD8X50
-	default n
-	bool "Orca"
-	help
-	  Select this to support the Orca device
-
-config MACH_MAHIMAHI
-	depends on ARCH_QSD8X50
-	default n
-	bool "Mahi-Mahi"
-	help
-	  Select this to support the Mahi-Mahi device
-
-config MACH_BRAVO
-	depends on ARCH_QSD8X50
-	default n
-	bool "Bravo"
-	help
-	  Select this to support the Bravo device
-
-config MACH_PASSIONC
-	depends on ARCH_QSD8X50
-	default n
-	bool "PassionC"
-	help
-	  Select this to support the PassionC device
-
-config MACH_BRAVOC
-	depends on ARCH_QSD8X50
-	default n
-	bool "BravoC"
-	help
-	  Select this to support the BravoC device
-
-config MACH_INCREDIBLE
-	depends on ARCH_QSD8X50
-	default n
-	bool "Incredible"
-	help
-	  Select this to support the Incredible device
-
-config MACH_INCREDIBLEC
-	depends on ARCH_QSD8X50
-	default n
-	bool "IncredibleC"
-	help
-	  Select this to support the IncredibleC device
-
-config MACH_SUPERSONIC
-	depends on ARCH_QSD8X50
-	default n
-	bool "Supersonic"
-	help
-	  Select this to support the Supersonic device
-
-config MACH_BEE
-	depends on ARCH_MSM7225
-	default n
-	bool "Bee"
-	help
-	  Support for Bee (PDA phone).
-
-config MACH_BUZZ
-        depends on ARCH_MSM7225
-        default n
-        bool "Buzz"
-        help
-          Support for Buzz (PDA phone).
-
-config MACH_BUZZC
-        depends on ARCH_MSM7225
-        default n
-        bool "Buzzc"
-        help
-          Support for Buzzc (PDA phone).
-
-config MACH_PARADISE
-	depends on ARCH_MSM7225
-	default n
-	bool "Paradise"
-	help
-	  Support for Paradise (PDA phone).
-
-config MACH_BAHAMAS
-	depends on ARCH_MSM7225
-	default n
-	bool "Bahamas"
-	help
-	  Support for Bahamas (PDA phone).
-
-config MACH_LEGEND
-	depends on ARCH_MSM7227
-	default n
-	bool "Legend"
-	help
-	  Support for Legend (PDA phone).
-
-config MACH_LATTE
-	depends on ARCH_MSM7227
-	default n
-	bool "Latte"
-	help
-	  Support for Latte (PDA phone).
-
-config MACH_LIBERTY
-	depends on ARCH_MSM7227
-	default n
-	bool "Liberty"
-	help
-	  Support for Liberty (PDA phone).
-
-config MACH_MARVEL
-	depends on ARCH_MSM7227
-	default n
-	bool "Marvel"
-	help
-	  Support for Marvel (PDA phone).
-
-config MACH_MARVELC
-	depends on ARCH_MSM7227
-	default n
-	bool "Marvelc"
-	help
-	  Support for Marvelc (PDA phone).
-
-config MACH_ICONG
-        depends on ARCH_MSM7227
-        default n
-        bool "Icong"
-        help
-          Support for Icong (PDA phone).
-
-config MACH_CHACHA
-	depends on ARCH_MSM7227
-	default n
-	bool "Chacha"
-	help
-	  Support for Chacha (PDA phone).
-
-config MACH_VISION
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 VISION"
-       help
-         Support for the Qualcomm MSM7x30 Vision board.
-
-config MACH_LEXIKON
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 LEXIKON"
-       help
-         Support for the Qualcomm MSM7x30 Lexikon board.
-
-config MACH_SPEEDY
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 SPEEDY"
-       help
-         Support for the Qualcomm MSM7x30 Speedy board.
-
-config MACH_KINGDOM
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 KINGDOM"
-       help
-         Support for the Qualcomm MSM7x30 Kingdom board.
-
-config MACH_MECHA
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 MECHA"
-       help
-         Support for the Qualcomm MSM7x30 Mecha board.
-
-config ARCH_MSM7X30_LTE
-       bool "Support QCT LTE function"
-       default n
-       help
-         For QCT LTE function, we need new rpcrouter and smd drivers.
-
-config MACH_GLACIER
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 GLACIER"
-       help
-         Support for the Qualcomm MSM7x30 Glacier board.
-
-config MACH_SAGA
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 SAGA"
-       help
-         Support for the Qualcomm MSM7x30 Saga board.
-
-config MACH_ICON
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 ICON"
-       help
-         Support for the Qualcomm MSM7x30 Icon board.
-
-config MACH_SPADE
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 SPADE"
-       help
-         Support for the Qualcomm MSM7x30 Spade board.
-
-config MACH_DYNASTY
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 DYNASTY"
-       help
-         Support for the Qualcomm MSM7x30 Dynasty board.
-
-config MACH_FLYER
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 FLYER"
-       select MSM7X30_DDR2
-       help
-         Support for the Qualcomm MSM7x30 Flyer board.
-
-config MACH_EXPRESS
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 EXPRESS"
-       select MSM7X30_DDR2
-       help
-         Support for the Qualcomm MSM7x30 Express board.
-
-config MACH_EXPRESS_KT
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 EXPRESS_KT"
-       select MSM7X30_DDR2
-       help
-         Support for the Qualcomm MSM7x30 Express_kt board.
-
-config MACH_EXPRESS_H
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 EXPRESS_H"
-       select MSM7X30_DDR2
-       help
-         Support for the Qualcomm MSM7x30 Express_h board.
-
-config MACH_VIVO
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 VIVO"
-       help
-         Support for the Qualcomm MSM7x30 Vivo board.
-
-config MACH_VIVOW
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 VIVOW"
-       help
-         Support for the Qualcomm MSM7x30 Vivo_w board.
-
-config MACH_VIVOW_CT
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 VIVOW_CT"
-       help
-         Support for the Qualcomm MSM7x30 Vivo_w_ct board.
-
-config MACH_TAG
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 TAG"
-       help
-         Support for the Qualcomm MSM7x30 Tag board.
-
-config MACH_TAGH
-       depends on ARCH_MSM7X30
-       depends on !MSM_STACKED_MEMORY
-       default n
-       bool "MSM7x30 TAGH"
-       help
-         Support for the Qualcomm MSM7x30 Tag_h board.
-
 config MACH_PYRAMID
-		depends on ARCH_MSM8X60
-		default n
-		bool "Pyramid"
-		select SMP_PARALLEL_START
-		help
-		  Support for the Pyramid device.
-
-config MACH_DOUBLESHOT
-        depends on ARCH_MSM8X60
-        default n
-        bool "Doubleshot"
-        select SMP_PARALLEL_START
-        help
-          Support for the Doubleshot device.
-
-config MACH_SHOOTER
-        depends on ARCH_MSM8X60
-        default n
-        bool "Shooter"
-        select SMP_PARALLEL_START
-        help
-          Support for the Shooter device.
-
-config MACH_RIDER
-        depends on ARCH_MSM8X60
-        default n
-        bool "Rider"
-        select SMP_PARALLEL_START
-        help
-          Support for the Shooter device.
-
-config MACH_SHOOTER_U
-        depends on ARCH_MSM8X60
-        default n
-        bool "Shooter_U"
-        select SMP_PARALLEL_START
-        help
-          Support for the Shooter_U device.
-
-config MACH_VERDI
 	depends on ARCH_MSM8X60
 	default n
-	bool "Verdi"
+	bool "Pyramid"
 	select SMP_PARALLEL_START
 	help
-	  Support for the Verdi device.
-
-config MACH_VERDI_LTE
-	depends on ARCH_MSM8X60
-	default n
-	bool "Verdi_lte"
-	select SMP_PARALLEL_START
-	help
-	  Support for the Verdi_lte device.
-
-config MACH_LEAD
-	depends on ARCH_MSM8X60
-	default n
-	bool "Lead"
-	select SMP_PARALLEL_START
-	help
-	  Support for the Lead device.
-
-config MACH_HOLIDAY
-	depends on ARCH_MSM8X60
-	default n
-	bool "Holiday"
-	select SMP_PARALLEL_START
-	help
-	  Support for the Holiday device.
-
-config MACH_VIGOR
-	depends on ARCH_MSM8X60
-	default n
-	bool "Vigor"
-	select SMP_PARALLEL_START
-	help
-	  Support for the Vigor device.
-
-config MACH_RUBY
-	depends on ARCH_MSM8X60
-	default n
-	bool "Ruby"
-	select SMP_PARALLEL_START
-	help
-	  Support for the Ruby device.
+	  Support for the Pyramid device.
 
 config MSM_STACKED_MEMORY
 	bool "Stacked Memory"
@@ -713,6 +175,7 @@ config PHYS_OFFSET
 	default 0x00000000 if ARCH_QSD8X50 && MSM_SOC_REV_A
 	default 0x20000000 if ARCH_QSD8X50
 	default 0x40400000 if ARCH_MSM8X60
+	default 0x48000000 if MACH_PYRAMID
 	default 0x10000000
 
 config KERNEL_PMEM_EBI_REGION
@@ -1370,7 +833,7 @@ config MSM_AVS_HW
 	  oscillators.
 
 config MSM_CPU_FREQ_SCREEN
-	bool
+	bool "CPU Freq screen on/off scaling"
 	default n
 	depends on HAS_EARLYSUSPEND
 	help
@@ -1387,14 +850,6 @@ config MSM_CPU_FREQ_SCREEN_ON
 	default 384000
 
 endif # MSM_CPU_FREQ_SCREEN
-
-config MSM_CPU_FREQ_ONDEMAND_MAX
-	int "Max"
-	default 384000
-
-config MSM_CPU_FREQ_ONDEMAND_MIN
-	int "Min"
-	default 245760
 
 config MSM_HW3D
 	tristate "MSM Hardware 3D Register Driver"

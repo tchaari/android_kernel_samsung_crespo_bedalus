@@ -564,8 +564,8 @@ static unsigned char pyd_auo_shrink_pwm(int br)
 				(BRI_SETTING_MAX - BRI_SETTING_DEF));
 	} else if (br > BRI_SETTING_MAX)
 		shrink_br = AUO_PWM_MAX;
-	/* TODO: remove log later */
-	pr_info("AUO: brightness orig=%d, transformed=%d\n", br, shrink_br);
+
+	/* pr_info("AUO: brightness orig=%d, transformed=%d\n", br, shrink_br); */
 
 	return shrink_br;
 }

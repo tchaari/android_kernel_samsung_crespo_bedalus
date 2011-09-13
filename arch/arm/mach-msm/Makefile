@@ -22,6 +22,7 @@ obj-$(CONFIG_ARCH_MSM7X30) += spm.o
 
 ifdef CONFIG_ARCH_MSM8X60
 obj-$(CONFIG_CPU_V7) += idle-v7-8x60.o msm_fault_handlers.o
+obj-$(CONFIG_MSM_AVS_HW) += avs_hw.o
 else
 obj-$(CONFIG_CPU_V7) += idle-v7.o msm_fault_handlers.o
 endif

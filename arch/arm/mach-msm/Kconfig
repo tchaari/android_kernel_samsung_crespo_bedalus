@@ -1360,6 +1360,15 @@ config MSM_CPU_FREQ_MIN
 
 endif # CPU_FREQ_MSM
 
+config MSM_AVS_HW
+	bool "Enable Adaptive Voltage Scaling (AVS)"
+	default n
+	help
+	  Enable AVS hardware to fine tune voltage at each frequency. The
+	  AVS hardware blocks associated with each Qualcomm ARMv7 cores can
+	  fine tune the voltages based on the feedback from the ring
+	  oscillators.
+
 config MSM_CPU_FREQ_SCREEN
 	bool
 	default n

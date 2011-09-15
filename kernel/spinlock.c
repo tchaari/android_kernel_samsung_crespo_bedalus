@@ -20,7 +20,6 @@
 #include <linux/interrupt.h>
 #include <linux/debug_locks.h>
 #include <linux/module.h>
-#include <linux/irq.h>
 
 /*
  * If lockdep is enabled then we use the non-preemption spin-ops
@@ -79,10 +78,6 @@ unsigned long __lockfunc __raw_##op##_lock_irqsave(locktype##_t *lock)	\
 			arch_##op##_relax(&lock->raw_lock);		\
 	}								\
 	(lock)->break_lock = 0;						\
-	if (spin_locking_flag) {					\
-		spin_locking_flag[smp_processor_id()] = 1; 		\
-		mb();							\
-	}								\
 	return flags;							\
 }									\
 									\
@@ -180,10 +175,6 @@ EXPORT_SYMBOL(_raw_spin_unlock);
 void __lockfunc _raw_spin_unlock_irqrestore(raw_spinlock_t *lock, unsigned long flags)
 {
 	__raw_spin_unlock_irqrestore(lock, flags);
-	if (spin_locking_flag) {
-		spin_locking_flag[smp_processor_id()] = 0;
-		mb();
-	}
 }
 EXPORT_SYMBOL(_raw_spin_unlock_irqrestore);
 #endif

@@ -1,4 +1,5 @@
 /* Copyright (c) 2009-2011, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2011, Will Tisdale <willtisdale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -88,8 +89,8 @@
 #define SPSS1_CLK_SEL_ADDR		(MSM_ACC1_BASE + 0x08)
 #define SPSS_L2_CLK_SEL_ADDR		(MSM_GCC_BASE  + 0x38)
 
-/* PTE EFUSE register. */
-#define QFPROM_PTE_EFUSE_ADDR		(MSM_QFPROM_BASE + 0x00C0)
+/* Safe boot frequency */
+#define BOOT_CPU_KHZ 			1188000
 
 static const void * const clk_ctl_addr[] = {SPSS0_CLK_CTL_ADDR,
 			SPSS1_CLK_CTL_ADDR};
@@ -772,7 +773,7 @@ static void __init bus_init(void)
 }
 
 #ifdef CONFIG_CPU_FREQ_MSM
-static struct cpufreq_frequency_table freq_table[NR_CPUS][30];
+static struct cpufreq_frequency_table freq_table[NR_CPUS][10];
 
 static void __init cpufreq_table_init(void)
 {
@@ -780,19 +781,21 @@ static void __init cpufreq_table_init(void)
 
 	for_each_possible_cpu(cpu) {
 		int i, freq_cnt = 0;
-		/* Construct the freq_table tables from acpu_freq_tbl. */
-		for (i = 0; acpu_freq_tbl[i].acpuclk_khz != 0
-				&& freq_cnt < ARRAY_SIZE(*freq_table); i++) {
-			if (acpu_freq_tbl[i].use_for_scaling[cpu]) {
-				freq_table[cpu][freq_cnt].index = freq_cnt;
-				freq_table[cpu][freq_cnt].frequency
-					= acpu_freq_tbl[i].acpuclk_khz;
-				freq_cnt++;
+#ifdef CONFIG_MSM8X60_1512MHZ
+		int allowed_speeds[]={384000,540000,702000,864000,1026000,1188000,1350000,1512000};
+		pr_info("Overclock enabled. Max CPU speed is 1512MHz.\n");
+#else
+		int allowed_speeds[]={384000,540000,702000,864000,1026000,1188000};
+		pr_info("Max CPU speed is 1188MHz.\n");
+#endif
+		for (i = 0; acpu_freq_tbl[i].acpuclk_khz; i++) {
+			for(freq_cnt = 0;freq_cnt<ARRAY_SIZE(allowed_speeds);freq_cnt++)
+				if(acpu_freq_tbl[i].acpuclk_khz==allowed_speeds[freq_cnt]) {
+					freq_table[cpu][freq_cnt].frequency = acpu_freq_tbl[i].acpuclk_khz;
 			}
 		}
 		/* freq_table not big enough to store all usable freqs. */
 		BUG_ON(acpu_freq_tbl[i].acpuclk_khz != 0);
-
 		freq_table[cpu][freq_cnt].index = freq_cnt;
 		freq_table[cpu][freq_cnt].frequency = CPUFREQ_TABLE_END;
 
@@ -840,28 +843,8 @@ static struct notifier_block __cpuinitdata acpuclock_cpu_notifier = {
 	.notifier_call = acpuclock_cpu_callback,
 };
 
-static unsigned int __init select_freq_plan(void)
-{
-	uint32_t max_khz = 1188000;
-	struct clkctl_acpu_speed *f;
-	acpu_freq_tbl = acpu_freq_tbl_v2;
-
-	/* Truncate the table based to max_khz. */
-	for (f = acpu_freq_tbl; f->acpuclk_khz != 0; f++) {
-		if (f->acpuclk_khz > max_khz) {
-			f->acpuclk_khz = 0;
-			break;
-		}
-	}
-	f--;
-	pr_info("Max ACPU freq: %u KHz\n", f->acpuclk_khz);
-
-	return f->acpuclk_khz;
-}
-
 void __init msm_acpu_clock_init(struct msm_acpu_clock_platform_data *clkdata)
 {
-	unsigned int max_cpu_khz;
 	int cpu;
 
 	mutex_init(&drv_state.lock);
@@ -870,7 +853,6 @@ void __init msm_acpu_clock_init(struct msm_acpu_clock_platform_data *clkdata)
 	drv_state.vdd_switch_time_us = clkdata->vdd_switch_time_us;
 
 	/* Configure hardware. */
-	max_cpu_khz = select_freq_plan();
 	unselect_scplls();
 	scpll_set_refs();
 	for_each_possible_cpu(cpu)
@@ -881,7 +863,7 @@ void __init msm_acpu_clock_init(struct msm_acpu_clock_platform_data *clkdata)
 
 	/* Improve boot time by ramping up CPUs immediately. */
 	for_each_online_cpu(cpu)
-		acpuclk_set_rate(cpu, max_cpu_khz, SETRATE_INIT);
+		acpuclk_set_rate(cpu, BOOT_CPU_KHZ, SETRATE_INIT);
 
 	cpufreq_table_init();
 	register_hotcpu_notifier(&acpuclock_cpu_notifier);

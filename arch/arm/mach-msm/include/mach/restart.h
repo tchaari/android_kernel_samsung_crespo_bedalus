@@ -35,6 +35,8 @@
 
 void msm_set_restart_mode(int mode);
 
+extern int pmic_reset_irq;
+
 /* if arch_reset is called from userspace,
    restart mode will be set to 'h' equal to 104.
    As a result, we need MAX to know the mode is valid. */

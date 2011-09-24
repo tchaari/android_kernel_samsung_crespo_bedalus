@@ -123,6 +123,7 @@
 #include <mach/panel_id.h>
 #include "clock-8x60.h"
 #include "rpm_stats.h"
+#include <mach/restart.h>
 
 #ifdef CONFIG_PERFLOCK
 #include <mach/perflock.h>
@@ -4850,6 +4851,8 @@ static void __init pyramid_init(void)
 
 	raw_speed_bin = readl(QFPROM_SPEED_BIN_ADDR);
 	speed_bin = raw_speed_bin & 0xF;
+
+	pmic_reset_irq = PM8058_RESOUT_IRQ(PM8058_IRQ_BASE);
 	/*
 	 * Initialize RPM first as other drivers and devices may need
 	 * it for their initialization.

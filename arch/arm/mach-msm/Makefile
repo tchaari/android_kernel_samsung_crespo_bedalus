@@ -91,6 +91,8 @@ obj-$(CONFIG_MSM_RPC_WATCHDOG) += rpc_dog_keepalive-8x60.o
 obj-$(CONFIG_MSM_RPCSERVER_WATCHDOG) += rpc_server_dog_keepalive-8x60.o
 obj-$(CONFIG_MSM_RPCSERVER_TIME_REMOTE) += rpc_server_time_remote-8x60.o
 obj-$(CONFIG_MSM_RPCSERVER_HANDSET) += rpc_server_handset-8x60.o
+obj-$(CONFIG_MSM_HOTPLUG) += msm_hotplug.o
+
 
 else
 # non MSM8X60 (MSM7x30, MSM7x30_LTE, QSD8X50)
@@ -505,7 +507,8 @@ obj-y	+= gpio-v2.o
 else
 obj-y	+= gpio.o generic_gpio.o
 endif
-obj-$(CONFIG_MSM_SLEEP_STATS) += msm_rq_stats.o idle_stats.o
+obj-$(CONFIG_MSM_SLEEP_STATS) += idle_stats.o
+obj-$(CONFIG_MSM_RQ_STATS) += msm_rq_stats.o
 obj-$(CONFIG_MSM_SHOW_RESUME_IRQ) += msm_show_resume_irq.o
 obj-$(CONFIG_MACH_MAHIMAHI) += board-mahimahi-tpa2018d1.o
 obj-$(CONFIG_MACH_MAHIMAHI) += board-mahimahi-smb329.o

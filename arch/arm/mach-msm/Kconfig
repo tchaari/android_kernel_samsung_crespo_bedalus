@@ -1351,6 +1351,23 @@ config MSM_SLEEP_STATS
 	depends on CPU_IDLE
 	default n
 
+config MSM_RQ_STATS
+	bool "Enable exporting of MSM runqueue stats to userspace"
+	depends on MSM_SLEEP_STATS
+	default n
+	help
+		This enables the a runqueue stat exporting driver for use with
+		mpdecision. MSM_HOTPLUG is the preferred method, as it is
+		much cheaper in terms of cpu cycles.
+
+config MSM_HOTPLUG
+	bool "Enable CPU hotplug control driver for MSM8x60"
+	depends on ARCH_MSM8X60
+	default y
+	help
+		This enables the kernel mode CPU hotplug control driver for the
+		second core in the 8x60 SoC.
+
 config MSM_STANDALONE_POWER_COLLAPSE
        bool "Enable standalone power collapse"
        default n

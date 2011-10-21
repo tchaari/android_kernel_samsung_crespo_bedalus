@@ -75,6 +75,7 @@ struct kgsl_pwrctrl {
 	struct kgsl_yamato_context *suspended_ctxt;
 	s64 time;
 	unsigned int no_switch_cnt;
+	unsigned int skip_cnt;
 	unsigned int idle_pass;
 };
 

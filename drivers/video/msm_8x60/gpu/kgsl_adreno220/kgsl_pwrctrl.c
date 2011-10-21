@@ -27,6 +27,8 @@
 #include "kgsl_log.h"
 
 #define SWITCH_OFF		200
+#define SWITCH_OFF_RESET_TH 40
+#define SKIP_COUNTER	500
 #define TZ_UPDATE_ID	0x01404000
 #define TZ_RESET_ID	0x01403000
 
@@ -308,10 +310,15 @@ static void kgsl_pwrctrl_idle_calc(struct kgsl_device *device)
 
 	/* If the GPU has stayed in turbo mode for a while, *
 	 * stop writing out values. */
-	if (pwr->active_pwrlevel)
-		pwr->no_switch_cnt = 0;
-	else if (pwr->no_switch_cnt > SWITCH_OFF)
+	if (pwr->active_pwrlevel == 0) {
+		if (pwr->no_switch_cnt > SWITCH_OFF) {
+			pwr->skip_cnt++;
+			if (pwr->skip_cnt > SKIP_COUNTER) {
+				pwr->no_switch_cnt -= SWITCH_OFF_RESET_TH;
+				pwr->skip_cnt = 0;
+			}
 		return;
+		}
 	pwr->no_switch_cnt++;
 	val = kgsl_pwrctrl_tz_update(idle);
 	if (val)

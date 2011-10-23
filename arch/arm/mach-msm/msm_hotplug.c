@@ -31,9 +31,9 @@
 #define DEBUG 0
 
 #define SAMPLING_PERIODS 5
-#define SAMPLING_RATE msecs_to_jiffies(6)
-#define ENABLE_RUNNING_THRESHOLD 350
-#define DISABLE_RUNNING_THRESHOLD 150
+#define SAMPLING_RATE msecs_to_jiffies(10)
+#define ENABLE_RUNNING_THRESHOLD 450
+#define DISABLE_RUNNING_THRESHOLD 125
 
 struct delayed_work msm_hotplug_work;
 struct work_struct cpu_up_work;
@@ -121,7 +121,7 @@ static void msm_hotplug_work_fn(struct work_struct *work)
 	 * there is no rush to offline the second core
 	 */
 	if (cpu_online(1) == 1)
-		rate = SAMPLING_RATE * 4;
+		rate = SAMPLING_RATE * 2;
 	else
 		rate = SAMPLING_RATE;
 
@@ -252,7 +252,7 @@ static struct early_suspend msm_hotplug_suspend = {
 
 static int __init msm_hotplug_init(void)
 {
-	printk(KERN_INFO "msm_hotplug v0.171 by _thalamus init()");
+	printk(KERN_INFO "msm_hotplug v0.172 by _thalamus init()");
 	msm_hotplug_wq = create_singlethread_workqueue("msm_hotplug");
 	BUG_ON(!msm_hotplug_wq);
 	INIT_DELAYED_WORK_DEFERRABLE(&msm_hotplug_work, msm_hotplug_work_fn);

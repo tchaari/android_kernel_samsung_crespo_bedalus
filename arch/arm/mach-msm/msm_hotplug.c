@@ -50,28 +50,39 @@ static unsigned int history[SAMPLING_PERIODS];
  */
 static unsigned int avg_running = 1000 * SAMPLING_PERIODS;
 
-static DEFINE_MUTEX(msm_hotplug_lock);
 static struct workqueue_struct *msm_hotplug_wq;
 extern int board_mfg_mode(void);
 
 
-static int msm_hotplug_running(void)
+static void msm_hotplug_work_fn(struct work_struct *work)
 {
-	int i,j,running;
+	int i,j,running,rate;
 #if DEBUG
 	int k;
 #endif
+
+	/*
+	 * Reduce sampling rate when second core is online
+	 * there is no rush to offline the second core
+	 */
+	if (unlikely(cpu_online(1)))
+		rate = SAMPLING_RATE * 2;
+	else
+		rate = SAMPLING_RATE;
+
 	/*
 	 * Multiply nr_running() by 100 so we don't have to
 	 * use float division to get the average
 	 */
-	mutex_lock(&msm_hotplug_lock);
 	running = nr_running() * 100;
+
 	history[index] = running;
+
 #if DEBUG
 	printk(KERN_DEBUG "index is: %d\n", index);
 	printk(KERN_DEBUG "running is: %d\n", running);
 #endif
+
 	/*
 	 * Use a circular buffer to calculate the average load
 	 * over the sampling periods.
@@ -83,7 +94,7 @@ static int msm_hotplug_running(void)
 	 */
 	for (i = 0, j = index; i < SAMPLING_PERIODS; i++, j--) {
 		avg_running += history[j];
-		if (j == 0)
+		if (unlikely(j == 0))
 			j = SAMPLING_PERIODS;
 	}
 
@@ -95,45 +106,26 @@ static int msm_hotplug_running(void)
 	printk(KERN_DEBUG "\n");
 	printk(KERN_DEBUG "avg_running before division: %d\n", avg_running);
 #endif
+
 	avg_running = avg_running / (SAMPLING_PERIODS + 1);
 
 	/*
 	 * If we are at the end of the buffer, return to the beginning.
 	 */
-	if (++index >= SAMPLING_PERIODS)
+	if (unlikely(++index >= SAMPLING_PERIODS))
 		index = 0;
-
 
 #if DEBUG
 	printk(KERN_DEBUG "average_running is: %d\n", avg_running);
 #endif
 
-	mutex_unlock(&msm_hotplug_lock);
-	return avg_running;
-}
-
-static void msm_hotplug_work_fn(struct work_struct *work)
-{
-	int rate;
-
-	/*
-	 * Reduce sampling rate when second core is online
-	 * there is no rush to offline the second core
-	 */
-	if (cpu_online(1) == 1)
-		rate = SAMPLING_RATE * 2;
-	else
-		rate = SAMPLING_RATE;
-
-	avg_running = msm_hotplug_running();
-
-	if((avg_running > ENABLE_RUNNING_THRESHOLD) && (cpu_online(1) == 0)) {
+	if(likely((avg_running > ENABLE_RUNNING_THRESHOLD) && (!cpu_online(1)))) {
 		printk(KERN_INFO
 			"msm_hotplug: Onlining CPU1, avg running: %d\n", avg_running);
 		queue_work_on(0, msm_hotplug_wq,&cpu_up_work);
 		goto out;
 	}
-	if((avg_running <= DISABLE_RUNNING_THRESHOLD) && (cpu_online(1) == 1)) {
+	if((avg_running <= DISABLE_RUNNING_THRESHOLD) && (cpu_online(1))) {
 		printk(KERN_INFO
 			"msm_hotplug: Offlining CPU1, avg running: %d\n", avg_running);
 		queue_work_on(0, msm_hotplug_wq,&cpu_down_work);
@@ -141,8 +133,7 @@ static void msm_hotplug_work_fn(struct work_struct *work)
 	}
 
 out:
-	queue_delayed_work_on(0, msm_hotplug_wq, &msm_hotplug_work,
-		rate);
+	queue_delayed_work_on(0, msm_hotplug_wq, &msm_hotplug_work, rate);
 }
 
 static int set_msm_hotplug_enabled(const char *val, struct kernel_param *kp)
@@ -151,7 +142,7 @@ static int set_msm_hotplug_enabled(const char *val, struct kernel_param *kp)
 	printk(KERN_INFO "msm_hotplug enabled: %d\n",enabled);
 	if (enabled) {
 		if (boost) {
-			if (cpu_online(1) == 0) {
+			if (!cpu_online(1)) {
 				printk(KERN_WARNING
 					"msm_hotplug: Onlining CPU1, boost enabled\n");
 				queue_work_on(0,msm_hotplug_wq,&cpu_up_work);
@@ -162,7 +153,7 @@ static int set_msm_hotplug_enabled(const char *val, struct kernel_param *kp)
 			SAMPLING_RATE);
 	} else {
 		cancel_rearming_delayed_work(&msm_hotplug_work);
-		if (cpu_online(1) == 1) {
+		if (cpu_online(1)) {
 			printk(KERN_WARNING
 				"msm_hotplug: Offlining CPU1, module disabled\n");
 			queue_work_on(0,msm_hotplug_wq,&cpu_down_work);
@@ -178,7 +169,7 @@ static int set_msm_hotplug_boost(const char *val, struct kernel_param *kp)
 	if (enabled) {
 		if (boost) {
 			cancel_rearming_delayed_work(&msm_hotplug_work);
-			if (cpu_online(1) == 0) {
+			if (!cpu_online(1)) {
 				printk(KERN_WARNING
 					"msm_hotplug: Onlining CPU1, boost enabled\n");
 				queue_work_on(0,msm_hotplug_wq,&cpu_up_work);
@@ -218,7 +209,7 @@ static void msm_hotplug_early_suspend(struct early_suspend *handler)
 			return;
 		}
 		cancel_rearming_delayed_work(&msm_hotplug_work);
-		if (num_online_cpus() == 2) {
+		if (cpu_online(1)) {
 			printk(KERN_INFO
 				"msm_hotplug: Offlining CPU1 for early suspend\n");
 			queue_work_on(0,msm_hotplug_wq,&cpu_down_work);
@@ -234,7 +225,7 @@ static void msm_hotplug_late_resume(struct early_suspend *handler)
 	printk(KERN_DEBUG "msm_hotplug: late resume handler\n");
 	if (enabled) {
 		if (boost) {
-			if (cpu_online(1) == 0) {
+			if (!cpu_online(1)) {
 				printk(KERN_WARNING
 					"msm_hotplug: Restoring boost after resume\n");
 				queue_work_on(0,msm_hotplug_wq,&cpu_up_work);
@@ -252,7 +243,7 @@ static struct early_suspend msm_hotplug_suspend = {
 
 static int __init msm_hotplug_init(void)
 {
-	printk(KERN_INFO "msm_hotplug v0.172 by _thalamus init()");
+	printk(KERN_INFO "msm_hotplug v0.180 by _thalamus init()");
 	msm_hotplug_wq = create_singlethread_workqueue("msm_hotplug");
 	BUG_ON(!msm_hotplug_wq);
 	INIT_DELAYED_WORK_DEFERRABLE(&msm_hotplug_work, msm_hotplug_work_fn);

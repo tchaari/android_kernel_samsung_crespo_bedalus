@@ -46,8 +46,9 @@ static unsigned int history[SAMPLING_PERIODS];
 /*
  * Initialize avg_running with a high value to avoid
  * offlining as soon as the averaging starts
+ * This high value will be averaged down after a few iterations
  */
-static unsigned int avg_running = 200 * SAMPLING_PERIODS;
+static unsigned int avg_running = 1000 * SAMPLING_PERIODS;
 
 static DEFINE_MUTEX(msm_hotplug_lock);
 static struct workqueue_struct *msm_hotplug_wq;
@@ -251,7 +252,7 @@ static struct early_suspend msm_hotplug_suspend = {
 
 static int __init msm_hotplug_init(void)
 {
-	printk(KERN_INFO "msm_hotplug v0.170 by _thalamus init()");
+	printk(KERN_INFO "msm_hotplug v0.171 by _thalamus init()");
 	msm_hotplug_wq = create_singlethread_workqueue("msm_hotplug");
 	BUG_ON(!msm_hotplug_wq);
 	INIT_DELAYED_WORK_DEFERRABLE(&msm_hotplug_work, msm_hotplug_work_fn);

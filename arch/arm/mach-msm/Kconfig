@@ -832,13 +832,6 @@ config MSM_AVS_HW
 	  fine tune the voltages based on the feedback from the ring
 	  oscillators.
 
-config MSM8X60_1512MHZ
-	bool "Enable 'overclock' to 1512MHz"
-	depends on ARCH_MSM8X60
-	default n
-	help
-	  Enable overclocking to 1512MHz.
-
 config MSM_CPU_FREQ_SCREEN
 	bool "CPU Freq screen on/off scaling"
 	default n

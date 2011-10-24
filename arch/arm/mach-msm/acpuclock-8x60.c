@@ -89,7 +89,10 @@
 #define SPSS1_CLK_SEL_ADDR		(MSM_ACC1_BASE + 0x08)
 #define SPSS_L2_CLK_SEL_ADDR		(MSM_GCC_BASE  + 0x38)
 
-/* Safe boot frequency */
+/*
+ * Safe boot frequency.
+ * This is only used until CPUfreq takes over
+ */
 #define BOOT_CPU_KHZ 			1188000
 
 static const void * const clk_ctl_addr[] = {SPSS0_CLK_CTL_ADDR,
@@ -168,6 +171,7 @@ static struct msm_bus_paths bw_level_tbl[] = {
 	[1] = BW_MBPS(1336), /* At least 167 MHz on bus. */
 	[2] = BW_MBPS(2008), /* At least 251 MHz on bus. */
 	[3] = BW_MBPS(2480), /* At least 310 MHz on bus. */
+	[4] = BW_MBPS(2900), /* At least 360 MHz on bus. */
 };
 
 static struct msm_bus_scale_pdata bus_client_pdata = {
@@ -200,14 +204,16 @@ static struct clkctl_l2_speed l2_freq_tbl_v2[] = {
 	[16] = {1242000,  1, 0x17, 1200000, 1212500, 3},
 	[17] = {1296000,  1, 0x18, 1200000, 1225000, 3},
 	[18] = {1350000,  1, 0x19, 1200000, 1225000, 3},
-	[19] = {1404000,  1, 0x1A, 1200000, 1250000, 3},
+	[19] = {1404000,  1, 0x1A, 1200000, 1250000, 4},
+	[20] = {1458000,  1, 0x1B, 1225000, 1250000, 4},
+	[21] = {1512000,  1, 0x1C, 1225000, 1250000, 4},
 };
 
 #define L2(x) (&l2_freq_tbl_v2[(x)])
 /* SCPLL frequencies = 2 * 27 MHz * L_VAL */
 static struct clkctl_acpu_speed acpu_freq_tbl_v2[] = {
   { {1, 1},  192000,  ACPU_PLL_8, 3, 1, 0, 0,    L2(1),   812500, 0x03006000},
-  /* MAX_AXI row is used to source CPU cores and L2 from the AFAB clock. */
+   /* MAX_AXI row is used to source CPU cores and L2 from the AFAB clock. */
   { {0, 0},  MAX_AXI, ACPU_AFAB,  1, 0, 0, 0,    L2(0),   875000, 0x03006000},
   { {1, 1},  384000,  ACPU_PLL_8, 3, 0, 0, 0,    L2(1),   875000, 0x03006000},
   { {1, 1},  432000,  ACPU_SCPLL, 0, 0, 1, 0x08, L2(1),   887500, 0x03006000},
@@ -229,8 +235,8 @@ static struct clkctl_acpu_speed acpu_freq_tbl_v2[] = {
   { {1, 1}, 1296000,  ACPU_SCPLL, 0, 0, 1, 0x18, L2(17), 1125000, 0x03006000},
   { {1, 1}, 1350000,  ACPU_SCPLL, 0, 0, 1, 0x19, L2(18), 1150000, 0x03006000},
   { {1, 1}, 1404000,  ACPU_SCPLL, 0, 0, 1, 0x1A, L2(19), 1175000, 0x03006000},
-  { {1, 1}, 1458000,  ACPU_SCPLL, 0, 0, 1, 0x1B, L2(19), 1187500, 0x03006000},
-  { {1, 1}, 1512000,  ACPU_SCPLL, 0, 0, 1, 0x1C, L2(19), 1200000, 0x03006000},
+  { {1, 1}, 1458000,  ACPU_SCPLL, 0, 0, 1, 0x1B, L2(20), 1187500, 0x03006000},
+  { {1, 1}, 1512000,  ACPU_SCPLL, 0, 0, 1, 0x1C, L2(21), 1200000, 0x03006000},
   { {0, 0}, 0 },
 };
 
@@ -774,7 +780,7 @@ static void __init bus_init(void)
 }
 
 #ifdef CONFIG_CPU_FREQ_MSM
-static struct cpufreq_frequency_table freq_table[NR_CPUS][10];
+static struct cpufreq_frequency_table freq_table[NR_CPUS][6];
 
 static void __init cpufreq_table_init(void)
 {
@@ -782,13 +788,9 @@ static void __init cpufreq_table_init(void)
 
 	for_each_possible_cpu(cpu) {
 		int i, freq_cnt = 0;
-#ifdef CONFIG_MSM8X60_1512MHZ
-		int allowed_speeds[]={192000,384000,540000,702000,864000,1026000,1188000,1350000,1512000};
-		pr_info("Overclock enabled. Max CPU speed is 1512MHz.\n");
-#else
-		int allowed_speeds[]={192000,384000,540000,702000,864000,1026000,1188000};
-		pr_info("Max CPU speed is 1188MHz.\n");
-#endif
+		int allowed_speeds[]={192000,432000,540000,864000,1188000,1512000};
+		pr_info("Max CPU speed is 1512MHz.\n");
+
 		for (i = 0; acpu_freq_tbl[i].acpuclk_khz; i++) {
 			for(freq_cnt = 0;freq_cnt<ARRAY_SIZE(allowed_speeds);freq_cnt++)
 				if(acpu_freq_tbl[i].acpuclk_khz==allowed_speeds[freq_cnt]) {

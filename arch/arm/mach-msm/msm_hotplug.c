@@ -30,10 +30,10 @@
 
 #define DEBUG 0
 
-#define SAMPLING_PERIODS 5
+#define SAMPLING_PERIODS 6
 #define SAMPLING_RATE msecs_to_jiffies(10)
-#define ENABLE_RUNNING_THRESHOLD 450
-#define DISABLE_RUNNING_THRESHOLD 125
+#define ENABLE_RUNNING_THRESHOLD 500
+#define DISABLE_RUNNING_THRESHOLD 200
 
 struct delayed_work msm_hotplug_work;
 struct work_struct cpu_up_work;
@@ -243,7 +243,7 @@ static struct early_suspend msm_hotplug_suspend = {
 
 static int __init msm_hotplug_init(void)
 {
-	printk(KERN_INFO "msm_hotplug v0.180 by _thalamus init()");
+	printk(KERN_INFO "msm_hotplug v0.181 by _thalamus init()");
 	msm_hotplug_wq = create_singlethread_workqueue("msm_hotplug");
 	BUG_ON(!msm_hotplug_wq);
 	INIT_DELAYED_WORK_DEFERRABLE(&msm_hotplug_work, msm_hotplug_work_fn);

@@ -15,9 +15,10 @@
  * 02110-1301, USA.
  *
  */
+
 /*
  * MSM CPU hotplug driver to control CPU1 on the MSM8x60 platform
- * and do away with the userspace junk Qualcomm and HTC implemented
+ * and do away with the expensive userspace junk from Qualcomm.
  */
 
 #include <linux/kernel.h>
@@ -28,18 +29,37 @@
 #include <linux/sched.h>
 #include <linux/earlysuspend.h>
 
+/*
+ * Enable debug output to dump the average
+ * calculations and ring buffer array values
+ */
 #define DEBUG 0
+
+/*
+ * Set ENABLED to 1 to enable automatic hotplug
+ * Set to 0 to only use CPU0 and leave CPU1 disabled
+ */
+#define ENABLED 1
+
+/*
+ * Set BOOST to 1 to permanently online CPU1
+ * WARNING: This may stop power collapse suspend
+ * working correctly.
+ */
+#define BOOST 0
 
 #define SAMPLING_PERIODS 6
 #define SAMPLING_RATE msecs_to_jiffies(10)
 #define ENABLE_RUNNING_THRESHOLD 500
 #define DISABLE_RUNNING_THRESHOLD 200
 
+
 struct delayed_work msm_hotplug_work;
 struct work_struct cpu_up_work;
 struct work_struct cpu_down_work;
-static int enabled = 1;
-static int boost = 0;
+
+static int enabled = ENABLED;
+static int boost = BOOST;
 static int suspended = 0;
 static unsigned int index = (SAMPLING_PERIODS - 1);
 static unsigned int history[SAMPLING_PERIODS];
@@ -86,11 +106,8 @@ static void msm_hotplug_work_fn(struct work_struct *work)
 	/*
 	 * Use a circular buffer to calculate the average load
 	 * over the sampling periods.
-	 * This will absorb load spikes of short
-	 * duration where we don't want the second core to be onlined.
-	 * By the time it is onlined, the work would have been processed by
-	 * the first core anyway, so the whole expensive operation would have
-	 * been in vain.
+	 * This will absorb load spikes of short duration where
+	 * we don't want the second core to be onlined.
 	 */
 	for (i = 0, j = index; i < SAMPLING_PERIODS; i++, j--) {
 		avg_running += history[j];
@@ -119,13 +136,13 @@ static void msm_hotplug_work_fn(struct work_struct *work)
 	printk(KERN_DEBUG "average_running is: %d\n", avg_running);
 #endif
 
-	if(likely((avg_running > ENABLE_RUNNING_THRESHOLD) && (!cpu_online(1)))) {
+	if(unlikely((avg_running > ENABLE_RUNNING_THRESHOLD) && (!cpu_online(1)))) {
 		printk(KERN_INFO
 			"msm_hotplug: Onlining CPU1, avg running: %d\n", avg_running);
 		queue_work_on(0, msm_hotplug_wq,&cpu_up_work);
 		goto out;
 	}
-	if((avg_running <= DISABLE_RUNNING_THRESHOLD) && (cpu_online(1))) {
+	if(unlikely((avg_running <= DISABLE_RUNNING_THRESHOLD) && (cpu_online(1)))) {
 		printk(KERN_INFO
 			"msm_hotplug: Offlining CPU1, avg running: %d\n", avg_running);
 		queue_work_on(0, msm_hotplug_wq,&cpu_down_work);
@@ -198,12 +215,12 @@ static void do_cpu_down(struct work_struct *work)
 
 static void msm_hotplug_early_suspend(struct early_suspend *handler)
 {
-	if (suspended)
+	if (unlikely(suspended))
 		return;
 	suspended = 1;
 	printk(KERN_DEBUG "msm_hotplug: early suspend handler\n");
-	if (enabled) {
-		if (boost) {
+	if (likely(enabled)) {
+		if (unlikely(boost)) {
 			printk(KERN_WARNING
 				"msm_hotplug: Not offlining CPU1 due to boost\n");
 			return;
@@ -219,12 +236,12 @@ static void msm_hotplug_early_suspend(struct early_suspend *handler)
 
 static void msm_hotplug_late_resume(struct early_suspend *handler)
 {
-	if (!suspended)
+	if (unlikely(!suspended))
 		return;
 	suspended = 0;
 	printk(KERN_DEBUG "msm_hotplug: late resume handler\n");
-	if (enabled) {
-		if (boost) {
+	if (likely(enabled)) {
+		if (unlikely(boost)) {
 			if (!cpu_online(1)) {
 				printk(KERN_WARNING
 					"msm_hotplug: Restoring boost after resume\n");
@@ -243,14 +260,14 @@ static struct early_suspend msm_hotplug_suspend = {
 
 static int __init msm_hotplug_init(void)
 {
-	printk(KERN_INFO "msm_hotplug v0.181 by _thalamus init()");
+	printk(KERN_INFO "msm_hotplug v0.182 by _thalamus init()");
 	msm_hotplug_wq = create_singlethread_workqueue("msm_hotplug");
 	BUG_ON(!msm_hotplug_wq);
 	INIT_DELAYED_WORK_DEFERRABLE(&msm_hotplug_work, msm_hotplug_work_fn);
 	INIT_WORK(&cpu_up_work, do_cpu_up);
 	INIT_WORK(&cpu_down_work, do_cpu_down);
 	register_early_suspend(&msm_hotplug_suspend);
-	if (enabled)
+	if (likely(enabled)) {
 		switch (board_mfg_mode()) {
 		case 0: /* normal */
 		case 1: /* factory2 */
@@ -278,6 +295,11 @@ static int __init msm_hotplug_init(void)
 			queue_work_on(0,msm_hotplug_wq,&cpu_down_work);
 			break;
 		}
+	} else {
+		printk(KERN_INFO
+			"msm_hotplug: driver disabled by default, offlining CPU1\n");
+		queue_work_on(0,msm_hotplug_wq,&cpu_down_work);
+	}
 	return 0;
 }
 late_initcall(msm_hotplug_init);

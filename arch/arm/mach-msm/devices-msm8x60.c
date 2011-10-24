@@ -666,6 +666,14 @@ struct platform_device msm_device_rng = {
 struct kgsl_platform_data kgsl_pdata = {
 	.pwrlevel_2d = {
 		{
+			.gpu_freq = 266667000,
+			.bus_freq = 1,
+		},
+		{
+			.gpu_freq = 228571000,
+			.bus_freq = 1,
+		},
+		{
 			.gpu_freq = 200000000,
 			.bus_freq = 1,
 		},
@@ -675,8 +683,12 @@ struct kgsl_platform_data kgsl_pdata = {
 		},
 	},
 	.init_level_2d = 0,
-	.num_levels_2d = 2,
+	.num_levels_2d = 4,
 	.pwrlevel_3d = {
+		{
+			.gpu_freq = 300000000,
+			.bus_freq = 3,
+		},
 		{
 			.gpu_freq = 266667000,
 			.bus_freq = 3,
@@ -695,7 +707,7 @@ struct kgsl_platform_data kgsl_pdata = {
 		},
 	},
 	.init_level_3d = 0,
-	.num_levels_3d = 4,
+	.num_levels_3d = 5,
 	.set_grp2d_async = NULL,
 	.set_grp3d_async = NULL,
 	.imem_clk_name = "imem_axi_clk",

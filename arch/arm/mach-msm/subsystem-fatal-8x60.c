@@ -49,6 +49,14 @@ static struct notifier_block modem_notif_nb = {
 	.notifier_call = modem_notif_handler,
 };
 
+/* It seems that modem would like to lock kernel before restarting the system. */
+inline void soc_restart(char mode, const char *cmd)
+{
+	lock_kernel();
+	arm_pm_restart(mode, cmd);
+	unlock_kernel();
+}
+
 static void send_q6_nmi(void)
 {
 	/* Send NMI to QDSP6 via an SCM call. */

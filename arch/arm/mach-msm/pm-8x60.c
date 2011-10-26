@@ -59,9 +59,7 @@
 #include "timer.h"
 #include "clock.h"
 #include "clock-8x60.h"
-#ifdef CONFIG_HAS_WAKELOCK
 #include <linux/wakelock.h>
-#endif
 
 
 /******************************************************************************
@@ -851,6 +849,11 @@ int msm_pm_idle_prepare(struct cpuidle_device *dev)
 				break;
 
 			if (num_online_cpus() > 1) {
+				allow = false;
+				break;
+			}
+
+			if (has_wake_lock(WAKE_LOCK_IDLE)) {
 				allow = false;
 				break;
 			}

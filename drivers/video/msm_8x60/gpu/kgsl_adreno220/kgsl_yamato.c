@@ -850,12 +850,12 @@ static int kgsl_yamato_start(struct kgsl_device *device, unsigned int init_ram)
 	kgsl_yamato_regwrite(device, REG_SQ_VS_PROGRAM, 0x00000000);
 	kgsl_yamato_regwrite(device, REG_SQ_PS_PROGRAM, 0x00000000);
 
-
-	kgsl_yamato_regwrite(device, REG_RBBM_PM_OVERRIDE1, 0);
-	if (device->chip_id != KGSL_CHIPID_LEIA_REV470)
-		kgsl_yamato_regwrite(device, REG_RBBM_PM_OVERRIDE2, 0);
-	else
-		kgsl_yamato_regwrite(device, REG_RBBM_PM_OVERRIDE2, 0x80);
+	/*
+	 * FIXME: Temp bodge to stop texture corruption in certain games.
+	 * Find another way of doing this other than at kgsl init.
+	 */
+	kgsl_yamato_regwrite(device, REG_RBBM_PM_OVERRIDE1, 0x7BFFFFFA);
+	kgsl_yamato_regwrite(device, REG_RBBM_PM_OVERRIDE2, 0x000001F4);
 
 	kgsl_sharedmem_set(&device->memstore, 0, 0,
 			   device->memstore.size);

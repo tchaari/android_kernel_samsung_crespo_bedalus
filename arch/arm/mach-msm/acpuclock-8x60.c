@@ -171,7 +171,6 @@ static struct msm_bus_paths bw_level_tbl[] = {
 	[1] = BW_MBPS(1336), /* At least 167 MHz on bus. */
 	[2] = BW_MBPS(2008), /* At least 251 MHz on bus. */
 	[3] = BW_MBPS(2480), /* At least 310 MHz on bus. */
-	[4] = BW_MBPS(2900), /* At least 360 MHz on bus. */
 };
 
 static struct msm_bus_scale_pdata bus_client_pdata = {
@@ -204,9 +203,7 @@ static struct clkctl_l2_speed l2_freq_tbl_v2[] = {
 	[16] = {1242000,  1, 0x17, 1200000, 1212500, 3},
 	[17] = {1296000,  1, 0x18, 1200000, 1225000, 3},
 	[18] = {1350000,  1, 0x19, 1200000, 1225000, 3},
-	[19] = {1404000,  1, 0x1A, 1200000, 1250000, 4},
-	[20] = {1458000,  1, 0x1B, 1225000, 1250000, 4},
-	[21] = {1512000,  1, 0x1C, 1225000, 1250000, 4},
+	[19] = {1404000,  1, 0x1A, 1200000, 1250000, 3},
 };
 
 #define L2(x) (&l2_freq_tbl_v2[(x)])
@@ -235,8 +232,8 @@ static struct clkctl_acpu_speed acpu_freq_tbl_v2[] = {
   { {1, 1}, 1296000,  ACPU_SCPLL, 0, 0, 1, 0x18, L2(17), 1125000, 0x03006000},
   { {1, 1}, 1350000,  ACPU_SCPLL, 0, 0, 1, 0x19, L2(18), 1150000, 0x03006000},
   { {1, 1}, 1404000,  ACPU_SCPLL, 0, 0, 1, 0x1A, L2(19), 1175000, 0x03006000},
-  { {1, 1}, 1458000,  ACPU_SCPLL, 0, 0, 1, 0x1B, L2(20), 1187500, 0x03006000},
-  { {1, 1}, 1512000,  ACPU_SCPLL, 0, 0, 1, 0x1C, L2(21), 1200000, 0x03006000},
+  { {1, 1}, 1458000,  ACPU_SCPLL, 0, 0, 1, 0x1B, L2(19), 1187500, 0x03006000},
+  { {1, 1}, 1512000,  ACPU_SCPLL, 0, 0, 1, 0x1C, L2(19), 1200000, 0x03006000},
   { {0, 0}, 0 },
 };
 
@@ -788,7 +785,7 @@ static void __init cpufreq_table_init(void)
 
 	for_each_possible_cpu(cpu) {
 		int i, freq_cnt = 0;
-		int allowed_speeds[]={192000,432000,540000,864000,1188000,1512000};
+		int allowed_speeds[]={384000,432000,540000,864000,1188000,1512000};
 		pr_info("Max CPU speed is 1512MHz.\n");
 
 		for (i = 0; acpu_freq_tbl[i].acpuclk_khz; i++) {

@@ -320,6 +320,7 @@ static void kgsl_pwrctrl_idle_calc(struct kgsl_device *device)
 			}
 		return;
 		}
+	}
 	pwr->no_switch_cnt++;
 	val = kgsl_pwrctrl_tz_update(idle);
 	if (val)

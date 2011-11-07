@@ -441,14 +441,14 @@ static void set_bus_bw(unsigned int bw)
 	int ret;
 
 	/* Bounds check. */
-	if (bw >= ARRAY_SIZE(bw_level_tbl)) {
+	if (unlikely(bw >= ARRAY_SIZE(bw_level_tbl))) {
 		pr_err("%s: invalid bandwidth request (%d)\n", __func__, bw);
 		return;
 	}
 
 	/* Update bandwidth if requst has changed. This may sleep. */
 	ret = msm_bus_scale_client_update_request(bus_perf_client, bw);
-	if (ret)
+	if (unlikely(ret))
 		pr_err("%s: bandwidth request failed (%d)\n", __func__, ret);
 
 	return;
@@ -464,7 +464,7 @@ static int increase_vdd(int cpu, unsigned int vdd_sc, unsigned int vdd_mem,
 	 * vdd_mem should be >= both vdd_sc and vdd_dig. */
 	rc = rpm_vreg_set_voltage(RPM_VREG_ID_PM8058_S0,
 				  rpm_vreg_voter[cpu], vdd_mem, 0);
-	if (rc) {
+	if (unlikely(rc)) {
 		pr_err("%s: vdd_mem (cpu%d) increase failed (%d)\n",
 			__func__, cpu, rc);
 		return rc;
@@ -473,7 +473,7 @@ static int increase_vdd(int cpu, unsigned int vdd_sc, unsigned int vdd_mem,
 	/* Increase vdd_dig active-set vote. */
 	rc = rpm_vreg_set_voltage(RPM_VREG_ID_PM8058_S1,
 				  rpm_vreg_voter[cpu], vdd_dig, 0);
-	if (rc) {
+	if (unlikely(rc)) {
 		pr_err("%s: vdd_dig (cpu%d) increase failed (%d)\n",
 			__func__, cpu, rc);
 		return rc;
@@ -483,12 +483,12 @@ static int increase_vdd(int cpu, unsigned int vdd_sc, unsigned int vdd_mem,
 	  * already be correct.  Attempting to set it is bad because we don't
 	  * know what CPU we are running on at this point, but the Scorpion
 	  * regulator API requires we call it from the affected CPU.  */
-	if (reason == SETRATE_HOTPLUG)
+	if (unlikely(reason == SETRATE_HOTPLUG))
 		return rc;
 
 	/* Update per-core Scorpion voltage. */
 	rc = regulator_set_voltage(regulator_sc[cpu], vdd_sc, MAX_VDD_SC);
-	if (rc) {
+	if (unlikely(rc)) {
 		pr_err("%s: vdd_sc (cpu%d) increase failed (%d)\n",
 			__func__, cpu, rc);
 		return rc;
@@ -506,10 +506,10 @@ static void decrease_vdd(int cpu, unsigned int vdd_sc, unsigned int vdd_mem,
 	/* Update per-core Scorpion voltage. This must be called on the CPU
 	 * that's being affected. Don't do this in the hotplug remove path,
 	 * where the rail is off and we're executing on the other CPU. */
-	if (reason != SETRATE_HOTPLUG) {
+	if (likely(reason != SETRATE_HOTPLUG)) {
 		ret = regulator_set_voltage(regulator_sc[cpu], vdd_sc,
 					    MAX_VDD_SC);
-		if (ret) {
+		if (unlikely(ret)) {
 			pr_err("%s: vdd_sc (cpu%d) decrease failed (%d)\n",
 				__func__, cpu, ret);
 			return;
@@ -519,7 +519,7 @@ static void decrease_vdd(int cpu, unsigned int vdd_sc, unsigned int vdd_mem,
 	/* Decrease vdd_dig active-set vote. */
 	ret = rpm_vreg_set_voltage(RPM_VREG_ID_PM8058_S1,
 				   rpm_vreg_voter[cpu], vdd_dig, 0);
-	if (ret) {
+	if(unlikely(ret)) {
 		pr_err("%s: vdd_dig (cpu%d) decrease failed (%d)\n",
 			__func__, cpu, ret);
 		return;
@@ -529,7 +529,7 @@ static void decrease_vdd(int cpu, unsigned int vdd_sc, unsigned int vdd_mem,
 	 * vdd_mem should be >= both vdd_sc and vdd_dig. */
 	ret = rpm_vreg_set_voltage(RPM_VREG_ID_PM8058_S0,
 				   rpm_vreg_voter[cpu], vdd_mem, 0);
-	if (ret) {
+	if (unlikely(ret)) {
 		pr_err("%s: vdd_mem (cpu%d) decrease failed (%d)\n",
 			__func__, cpu, ret);
 		return;
@@ -568,12 +568,12 @@ int acpuclk_set_rate(int cpu, unsigned long rate, enum setrate_reason reason)
 	unsigned long flags;
 	int rc = 0;
 
-	if (cpu > num_possible_cpus()) {
+	if (unlikely(cpu > num_possible_cpus())) {
 		rc = -EINVAL;
 		goto out;
 	}
 
-	if (reason == SETRATE_CPUFREQ || reason == SETRATE_HOTPLUG)
+	if (likely(reason == SETRATE_CPUFREQ || reason == SETRATE_HOTPLUG))
 		mutex_lock(&drv_state.lock);
 
 	strt_s = drv_state.current_speed[cpu];
@@ -586,7 +586,7 @@ int acpuclk_set_rate(int cpu, unsigned long rate, enum setrate_reason reason)
 	for (tgt_s = acpu_freq_tbl; tgt_s->acpuclk_khz != 0; tgt_s++)
 		if (tgt_s->acpuclk_khz == rate)
 			break;
-	if (tgt_s->acpuclk_khz == 0) {
+	if (unlikely(tgt_s->acpuclk_khz == 0)) {
 		rc = -EINVAL;
 		goto out;
 	}
@@ -594,7 +594,7 @@ int acpuclk_set_rate(int cpu, unsigned long rate, enum setrate_reason reason)
 	/* AVS needs SAW_VCTL to be intitialized correctly, before enable,
 	 * and is not initialized at acpuclk_init().
 	 */
-	if (reason == SETRATE_CPUFREQ)
+	if (likely(reason == SETRATE_CPUFREQ))
 		AVS_DISABLE(cpu);
 
 	/* Calculate vdd_mem and vdd_dig requirements.
@@ -610,11 +610,11 @@ int acpuclk_set_rate(int cpu, unsigned long rate, enum setrate_reason reason)
 	vdd_dig = max(tgt_s->l2_level->vdd_dig, pll_vdd_dig);
 
 	/* Increase VDD levels if needed. */
-	if ((reason == SETRATE_CPUFREQ || reason == SETRATE_HOTPLUG
+	if (likely((reason == SETRATE_CPUFREQ || reason == SETRATE_HOTPLUG
 	  || reason == SETRATE_INIT)
-			&& (tgt_s->acpuclk_khz > strt_s->acpuclk_khz)) {
+			&& (tgt_s->acpuclk_khz > strt_s->acpuclk_khz))) {
 		rc = increase_vdd(cpu, tgt_s->vdd_sc, vdd_mem, vdd_dig, reason);
-		if (rc)
+		if (unlikely(rc))
 			goto out;
 	}
 
@@ -631,11 +631,11 @@ int acpuclk_set_rate(int cpu, unsigned long rate, enum setrate_reason reason)
 	spin_unlock_irqrestore(&drv_state.l2_lock, flags);
 
 	/* Nothing else to do for SWFI. */
-	if (reason == SETRATE_SWFI)
+	if (unlikely(reason == SETRATE_SWFI))
 		goto out;
 
 	/* Nothing else to do for power collapse. */
-	if (reason == SETRATE_PC)
+	if (unlikely(reason == SETRATE_PC))
 		goto out;
 
 	/* Update bus bandwith request. */
@@ -648,11 +648,11 @@ int acpuclk_set_rate(int cpu, unsigned long rate, enum setrate_reason reason)
 	dprintk("ACPU%d speed change complete\n", cpu);
 
 	/* Re-enable AVS */
-	if (reason == SETRATE_CPUFREQ)
+	if (likely(reason == SETRATE_CPUFREQ))
 		AVS_ENABLE(cpu, tgt_s->avsdscr_setting);
 
 out:
-	if (reason == SETRATE_CPUFREQ || reason == SETRATE_HOTPLUG)
+	if (likely(reason == SETRATE_CPUFREQ || reason == SETRATE_HOTPLUG))
 		mutex_unlock(&drv_state.lock);
 	return rc;
 }

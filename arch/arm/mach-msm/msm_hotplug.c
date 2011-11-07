@@ -163,11 +163,10 @@ static int set_msm_hotplug_enabled(const char *val, struct kernel_param *kp)
 {
 	unsigned long flags;
 
-	spin_lock_irqsave(&hotplug_lock, flags);
-
 	param_set_int(val, kp);
 	printk(KERN_INFO "msm_hotplug enabled: %d\n",enabled);
 	if (enabled) {
+		spin_lock_irqsave(&hotplug_lock, flags);
 		if (boost) {
 			if (!cpu_online(1)) {
 				printk(KERN_WARNING
@@ -177,15 +176,17 @@ static int set_msm_hotplug_enabled(const char *val, struct kernel_param *kp)
 			return 0;
 		}
 		queue_delayed_work(msm_hotplug_wq,&msm_hotplug_work,SAMPLING_RATE);
+		spin_unlock_irqrestore(&hotplug_lock, flags);
 	} else {
 		cancel_rearming_delayed_work(&msm_hotplug_work);
 		if (cpu_online(1)) {
+			spin_lock_irqsave(&hotplug_lock, flags);
 			printk(KERN_WARNING
 				"msm_hotplug: Offlining CPU1, module disabled\n");
 			queue_delayed_work(msm_hotplug_wq, &hotplug_offline_work, HZ / 10);
+			spin_unlock_irqrestore(&hotplug_lock, flags);
 		}
 	}
-	spin_unlock_irqrestore(&hotplug_lock, flags);
 	return 0;
 }
 
@@ -193,24 +194,25 @@ static int set_msm_hotplug_boost(const char *val, struct kernel_param *kp)
 {
 	unsigned long flags;
 
-	spin_lock_irqsave(&hotplug_lock, flags);
-
 	param_set_int(val, kp);
 	printk(KERN_INFO "msm_hotplug boost: %d\n",boost);
 	if (enabled) {
 		if (boost) {
 			cancel_rearming_delayed_work(&msm_hotplug_work);
 			if (!cpu_online(1)) {
+				spin_lock_irqsave(&hotplug_lock, flags);
 				printk(KERN_WARNING
 					"msm_hotplug: Onlining CPU1, boost enabled\n");
 				queue_delayed_work(msm_hotplug_wq, &hotplug_online_work, 0);
+				spin_unlock_irqrestore(&hotplug_lock, flags);
 			}
 		} else {
+			spin_lock_irqsave(&hotplug_lock, flags);
 			printk(KERN_INFO "msm_hotplug: Setting CPU1 back to auto\n");
 			queue_delayed_work(msm_hotplug_wq, &msm_hotplug_work, SAMPLING_RATE);
+			spin_unlock_irqrestore(&hotplug_lock, flags);
 		}
 	}
-	spin_unlock_irqrestore(&hotplug_lock, flags);
 	return 0;
 }
 
@@ -231,8 +233,6 @@ static void msm_hotplug_early_suspend(struct early_suspend *handler)
 {
 	unsigned long flags;
 
-	spin_lock_irqsave(&hotplug_lock, flags);
-
 	if (unlikely(suspended))
 		return;
 	suspended = 1;
@@ -245,12 +245,13 @@ static void msm_hotplug_early_suspend(struct early_suspend *handler)
 		}
 		cancel_rearming_delayed_work(&msm_hotplug_work);
 		if (cpu_online(1)) {
+			spin_lock_irqsave(&hotplug_lock, flags);
 			printk(KERN_INFO
 				"msm_hotplug: Offlining CPU1 for early suspend\n");
 			queue_delayed_work(msm_hotplug_wq, &hotplug_offline_work, HZ / 10);
+			spin_unlock_irqrestore(&hotplug_lock, flags);
 		}
 	}
-	spin_unlock_irqrestore(&hotplug_lock, flags);
 	return;
 }
 
@@ -258,23 +259,23 @@ static void msm_hotplug_late_resume(struct early_suspend *handler)
 {
 	unsigned long flags;
 
-	spin_lock_irqsave(&hotplug_lock, flags);
-
 	if (unlikely(!suspended))
 		return;
 	suspended = 0;
 	printk(KERN_DEBUG "msm_hotplug: late resume handler\n");
 	if (likely(enabled)) {
+		spin_lock_irqsave(&hotplug_lock, flags);
 		if (unlikely(boost)) {
 			if (!cpu_online(1)) {
 				printk(KERN_WARNING
 					"msm_hotplug: Restoring boost after resume\n");
 				queue_delayed_work(msm_hotplug_wq, &hotplug_online_work, 0);
 			}
-		} else
+		} else {
 			queue_delayed_work(msm_hotplug_wq, &msm_hotplug_work, SAMPLING_RATE);
+		}
+		spin_unlock_irqrestore(&hotplug_lock, flags);
 	}
-	spin_unlock_irqrestore(&hotplug_lock, flags);
 	return;
 }
 
@@ -285,7 +286,7 @@ static struct early_suspend msm_hotplug_suspend = {
 
 static int __init msm_hotplug_init(void)
 {
-	printk(KERN_INFO "msm_hotplug v0.190 by _thalamus init()");
+	printk(KERN_INFO "msm_hotplug v0.191 by _thalamus init()");
 	msm_hotplug_wq = create_singlethread_workqueue("msm_hotplug");
 	BUG_ON(!msm_hotplug_wq);
 	INIT_DELAYED_WORK_DEFERRABLE(&msm_hotplug_work, msm_hotplug_work_fn);

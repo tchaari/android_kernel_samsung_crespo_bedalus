@@ -51,7 +51,7 @@
 
 #define SAMPLING_PERIODS 6
 #define SAMPLING_RATE msecs_to_jiffies(10)
-#define ENABLE_RUNNING_THRESHOLD 500
+#define ENABLE_RUNNING_THRESHOLD 400
 #define DISABLE_RUNNING_THRESHOLD 200
 
 struct delayed_work msm_hotplug_work;
@@ -139,13 +139,13 @@ static void msm_hotplug_work_fn(struct work_struct *work)
 	printk(KERN_DEBUG "average_running is: %d\n", avg_running);
 #endif
 
-	if(unlikely((avg_running > ENABLE_RUNNING_THRESHOLD) && (!cpu_online(1)))) {
+	if(unlikely((avg_running >= ENABLE_RUNNING_THRESHOLD) && (!cpu_online(1)))) {
 		printk(KERN_INFO
 			"msm_hotplug: Onlining CPU1, avg running: %d\n", avg_running);
 		queue_delayed_work(msm_hotplug_wq, &hotplug_online_work, 0);
 		goto out;
 	}
-	if(unlikely((avg_running <= DISABLE_RUNNING_THRESHOLD) && (cpu_online(1)))) {
+	if(unlikely((avg_running < DISABLE_RUNNING_THRESHOLD) && (cpu_online(1)))) {
 		printk(KERN_INFO
 			"msm_hotplug: Offlining CPU1, avg running: %d\n", avg_running);
 		queue_delayed_work(msm_hotplug_wq, &hotplug_offline_work, 0);
@@ -286,7 +286,7 @@ static struct early_suspend msm_hotplug_suspend = {
 
 static int __init msm_hotplug_init(void)
 {
-	printk(KERN_INFO "msm_hotplug v0.191 by _thalamus init()");
+	printk(KERN_INFO "msm_hotplug v0.192 by _thalamus init()");
 	msm_hotplug_wq = create_singlethread_workqueue("msm_hotplug");
 	BUG_ON(!msm_hotplug_wq);
 	INIT_DELAYED_WORK_DEFERRABLE(&msm_hotplug_work, msm_hotplug_work_fn);

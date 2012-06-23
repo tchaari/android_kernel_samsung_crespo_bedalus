@@ -12,7 +12,8 @@ ccflags-y := \
 	-Wno-sign-compare\
 	-Werror\
 	-fno-strict-aliasing\
-	-Wno-pointer-arith
+	-Wno-pointer-arith\
+	-Os
 
 ccflags-y += -DLINUX -D__linux__ -DANDROID
 ccflags-y += -Idrivers/gpu/pvr

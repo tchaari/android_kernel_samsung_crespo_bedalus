@@ -33,7 +33,7 @@
 #include <linux/earlysuspend.h>
 #ifdef CONFIG_FB_VOODOO
 #include <linux/miscdevice.h>
-#define VOODOO_COLOR_VERSION 3
+#define VOODOO_COLOR_VERSION 2
 #endif
 
 #define SLEEPMSEC		0x1000
@@ -77,7 +77,7 @@ struct s5p_lcd *lcd_;
 u32 original_color_adj_mults[3];
 unsigned int panel_config_sequence = 0;
 
-int hacky_v1_offset[3] = {0, 0, 0};
+int hacky_v1_offset[3] = {-26, -30, -33};
 
 static const u16 s6e63m0_SEQ_ETC_SETTING_SAMSUNG[] = {
 	/* ETC Condition Set Command  */
@@ -278,10 +278,7 @@ static void setup_gamma_regs(struct s5p_lcd *lcd, u16 gamma_regs[])
 		// terrible shameful hack allowing to get back standard
 		// colors without fixing the real thing properly (gamma table)
 		// it consist on a simple (negative) offset applied on v0
-        int adj_hack = adj + ((hacky_v1_offset[c] * (int)adj) / 100);
-        if (adj_hack > 140)
-            adj_hack = 140;
-        gamma_regs[c] = adj_hack | 0x100;
+		gamma_regs[c] = (adj > hacky_v1_offset[c] && (adj <=255)) ? (adj - hacky_v1_offset[c]) | 0x100 : adj | 0x100;
 #else
 		gamma_regs[c] = adj | 0x100;
 #endif
@@ -999,7 +996,7 @@ static ssize_t red_v1_offset_show(struct device *dev, struct device_attribute *a
 
 static ssize_t red_v1_offset_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
 {
-	u32 value;
+	int value;
 	if (sscanf(buf, "%d", &value) == 1)
 	{
 		hacky_v1_offset[0] = value;
@@ -1015,7 +1012,7 @@ static ssize_t green_v1_offset_show(struct device *dev, struct device_attribute 
 
 static ssize_t green_v1_offset_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
 {
-	u32 value;
+	int value;
 	if (sscanf(buf, "%d", &value) == 1)
 	{
 		hacky_v1_offset[1] = value;
@@ -1082,7 +1079,7 @@ static struct attribute_group voodoo_color_group = {
 
 static struct miscdevice voodoo_color_device = {
 	.minor = MISC_DYNAMIC_MINOR,
-	.name = "samoled_color",
+	.name = "voodoo_color",
 };
 #endif
 
@@ -1142,7 +1139,7 @@ static int __devinit tl2796_probe(struct spi_device *spi)
 	}
 
 	lcd->bl_dev->props.max_brightness = 255;
-	lcd->bl_dev->props.brightness = lcd->bl;
+	lcd->bl_dev->props.brightness = 255;
 
 	tl2796_ldi_enable(lcd);
 #ifdef CONFIG_HAS_EARLYSUSPEND

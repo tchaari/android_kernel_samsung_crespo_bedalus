@@ -17,5 +17,5 @@ DHDOFILES = dhd_linux.o linux_osl.o bcmutils.o dhd_common.o dhd_custom_gpio.o \
 
 obj-$(CONFIG_BCM4329) += bcm4329.o
 bcm4329-objs += $(DHDOFILES)
-EXTRA_CFLAGS = $(DHDCFLAGS)
+EXTRA_CFLAGS = $(DHDCFLAGS) -Wno-array-bounds
 EXTRA_LDFLAGS += --strip-debug

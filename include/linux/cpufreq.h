@@ -346,9 +346,6 @@ extern struct cpufreq_governor cpufreq_gov_performance;
 #endif
 #ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_PERFORMANCE
 #define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_performance)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_POWERSAVE)
-extern struct cpufreq_governor cpufreq_gov_powersave;
-#define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_powersave)
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_USERSPACE)
 extern struct cpufreq_governor cpufreq_gov_userspace;
 #define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_userspace)
@@ -358,9 +355,30 @@ extern struct cpufreq_governor cpufreq_gov_ondemand;
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_CONSERVATIVE)
 extern struct cpufreq_governor cpufreq_gov_conservative;
 #define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_conservative)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_INTERACTIVE)
-extern struct cpufreq_governor cpufreq_gov_interactive;
-#define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_interactive)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_LAZY)
+extern struct cpufreq_governor cpufreq_gov_lazy;
+#define CPUFREQ_DEFAULT_GOVERNOR  (&cpufreq_gov_lazy)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_SMARTASS2)
+extern struct cpufreq_governor cpufreq_gov_smartass2;
+#define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_smartass2)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_MINMAX)
+extern struct cpufreq_governor cpufreq_gov_minmax;
+#define CPUFREQ_DEFAULT_GOVERNOR  (&cpufreq_gov_minmax)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_LIONHEART)
+extern struct cpufreq_governor cpufreq_gov_lionheart;
+#define CPUFREQ_DEFAULT_GOVERNOR  (&cpufreq_gov_lionheart)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_LULZACTIVE)
+extern struct cpufreq_governor cpufreq_gov_lulzactive;
+#define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_lulzactive)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_WHEATLEY)
+extern struct cpufreq_governor cpufreq_gov_wheatley;
+#define CPUFREQ_DEFAULT_GOVERNOR  (&cpufreq_gov_wheatley)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_INTELLIDEMAND)	
+extern struct cpufreq_governor cpufreq_gov_intellidemand;
+#define CPUFREQ_DEFAULT_GOVERNOR  (&cpufreq_gov_intellidemand)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_SAVAGEDZEN)
+extern struct cpufreq_governor cpufreq_gov_savagedzen;
+#define CPUFREQ_DEFAULT_GOVERNOR  (&cpufreq_gov_savagedzen)
 #endif
 
 
@@ -393,7 +411,6 @@ int cpufreq_frequency_table_target(struct cpufreq_policy *policy,
 struct cpufreq_frequency_table *cpufreq_frequency_get_table(unsigned int cpu);
 struct cpufreq_policy *cpufreq_cpu_get(unsigned int cpu);
 void   cpufreq_cpu_put(struct cpufreq_policy *data);
-extern unsigned int uIsSuspended;
 
 /* the following are really really optional */
 extern struct freq_attr cpufreq_freq_attr_scaling_available_freqs;

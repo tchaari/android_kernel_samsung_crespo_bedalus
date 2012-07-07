@@ -237,14 +237,6 @@ static int s5pv210_target(struct cpufreq_policy *policy,
                 policy->max = 800000;
             }
         }
-	// Increase min frequency to 400 to keep DI in the most efficient 
-	// power saving range. Thanks Kalim and Harbb.
-	if (uIsSuspended == 1) {
-            if (policy->min != 400000) {
-                policy->user_policy.min = 400000;
-                policy->min = 400000;
-            }
-        }
     }
 #endif
 

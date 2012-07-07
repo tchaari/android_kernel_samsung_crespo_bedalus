@@ -143,14 +143,14 @@ static ssize_t backlightnotification_version(struct device *dev,
 static DEVICE_ATTR(enabled, S_IRUGO | S_IWUGO,
 		backlightnotification_status_read,
 		backlightnotification_status_write);
-static DEVICE_ATTR(led, S_IRUGO | S_IWUGO,
+static DEVICE_ATTR(notification_led, S_IRUGO | S_IWUGO,
 		notification_led_status_read,
 		notification_led_status_write);
 static DEVICE_ATTR(version, S_IRUGO , backlightnotification_version, NULL);
 
 static struct attribute *bln_notification_attributes[] = {
 	&dev_attr_enabled.attr,
-	&dev_attr_led.attr,
+	&dev_attr_notification_led.attr,
 	&dev_attr_version.attr,
 	NULL
 };
@@ -161,7 +161,7 @@ static struct attribute_group bln_notification_group = {
 
 static struct miscdevice bln_device = {
 	.minor = MISC_DYNAMIC_MINOR,
-	.name = "notification",
+	.name = "backlightnotification",
 };
 
 void register_bln_implementation(struct bln_implementation *imp)

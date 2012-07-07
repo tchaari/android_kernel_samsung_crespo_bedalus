@@ -223,8 +223,9 @@ static void cypress_touchkey_early_suspend(struct early_suspend *h)
 		devdata->pdata->touchkey_onoff(TOUCHKEY_OFF);
 		devdata->pdata->touchkey_sleep_onoff(TOUCHKEY_OFF);
 	}
-#endif
+#else
 	devdata->pdata->touchkey_onoff(TOUCHKEY_OFF);
+#endif
 
 	all_keys_up(devdata);
 }
@@ -371,7 +372,13 @@ static void cypress_touchkey_enable_led_notification(void){
 		enable_touchkey_backlights();
 	}
 	else
-		pr_info("%s: cannot set notification led, touchkeys are enabled\n",__FUNCTION__);
+#ifdef CONFIG_TOUCH_WAKE
+	    {
+		enable_touchkey_backlights();
+	    }
+#else
+	    pr_info("%s: cannot set notification led, touchkeys are enabled\n",__FUNCTION__);
+#endif
 }
 
 static void cypress_touchkey_disable_led_notification(void){
@@ -394,6 +401,12 @@ static void cypress_touchkey_disable_led_notification(void){
 		blndevdata->pdata->touchkey_onoff(TOUCHKEY_OFF);
 		#endif
 	}
+#ifdef CONFIG_TOUCH_WAKE
+	else
+	    {
+		disable_touchkey_backlights();
+	    }
+#endif	
 }
 
 static struct bln_implementation cypress_touchkey_bln = {
@@ -505,7 +518,6 @@ static int cypress_touchkey_probe(struct i2c_client *client,
 	register_bln_implementation(&cypress_touchkey_bln);
 #endif
 	return 0;
-
 
 err_req_irq:
 err_backlight_on:

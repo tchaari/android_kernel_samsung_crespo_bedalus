@@ -81,7 +81,7 @@ enum s5pv210_dmc_port {
 };
 
 static struct cpufreq_frequency_table s5pv210_freq_table[] = {
-	{L0, 1200*1000};
+	{L0, 1200*1000},
 	{L1, 1000*1000},
     	{L2, 800*1000},
     	{L3, 400*1000},

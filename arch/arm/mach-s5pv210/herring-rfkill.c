@@ -274,7 +274,7 @@ static int __init herring_rfkill_probe(struct platform_device *pdev)
 	return ret;
 }
 /* dave */
-static struct __init platform_driver herring_device_rfkill = {
+static struct platform_driver herring_device_rfkill = {
 	.probe = herring_rfkill_probe,
 	.driver = {
 		.name = "bt_rfkill",

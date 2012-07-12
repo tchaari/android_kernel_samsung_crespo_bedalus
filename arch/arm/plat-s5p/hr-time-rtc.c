@@ -506,7 +506,7 @@ static void __init s5p_timer_init(void)
 #endif
 }
 /* dave */
-struct __init sys_timer s5p_systimer = {
+struct sys_timer s5p_systimer = {
 	.init		= s5p_timer_init,
 };
 

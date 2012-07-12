@@ -505,8 +505,8 @@ static void __init s5p_timer_init(void)
 	setup_irq(IRQ_SYSTIMER, &s5p_systimer_irq);
 #endif
 }
-
-struct sys_timer s5p_systimer __refdata = {
+/* dave */
+struct __init sys_timer s5p_systimer = {
 	.init		= s5p_timer_init,
 };
 

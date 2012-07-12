@@ -890,8 +890,8 @@ static struct freq_attr *s5pv210_cpufreq_attr[] = {
 	&cpufreq_freq_attr_scaling_available_freqs,
 	NULL,
 };
-
-static struct cpufreq_driver s5pv210_driver __refdata = {
+/* dave */
+static struct __init cpufreq_driver s5pv210_driver = {
 	.flags		= CPUFREQ_STICKY,
 	.verify		= s5pv210_verify_speed,
 	.target		= s5pv210_target,
@@ -952,8 +952,8 @@ finish:
 
 	return cpufreq_register_driver(&s5pv210_driver);
 }
-
-static struct platform_driver s5pv210_cpufreq_drv __refdata = {
+/* dave */
+static struct __init platform_driver s5pv210_cpufreq_drv = {
 	.probe		= s5pv210_cpufreq_probe,
 	.driver		= {
 		.owner	= THIS_MODULE,

@@ -273,8 +273,8 @@ static int __init herring_rfkill_probe(struct platform_device *pdev)
  err_req_gpio_wlan_bt_en:
 	return ret;
 }
-
-static struct platform_driver herring_device_rfkill __refdata = {
+/* dave */
+static struct __init platform_driver herring_device_rfkill = {
 	.probe = herring_rfkill_probe,
 	.driver = {
 		.name = "bt_rfkill",

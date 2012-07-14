@@ -29,7 +29,10 @@
 #ifdef CONFIG_CPU_DIDLE
 static unsigned long lMinOldFreq;
 static unsigned long lPolicyMinOldFreq;
+static unsigned long lMaxOldFreq;
+static unsigned long lPolicyMaxOldFreq;
 unsigned int uIsSuspended;
+struct cpufreq_policy *policy;
 #endif
 
 enum {
@@ -192,7 +195,6 @@ void request_suspend_state(suspend_state_t new_state)
     /* Increases the CPU min speed if we have deepidle enabled and we go into
        suspend mode. This is fully independent of the governor, so we can add
        or remove our favourite governor */
-    struct cpufreq_policy *policy;
 
     if (deepidle_is_enabled()) {
         policy = cpufreq_cpu_get(0);
@@ -201,7 +203,13 @@ void request_suspend_state(suspend_state_t new_state)
             lPolicyMinOldFreq = policy->user_policy.max;
             policy->user_policy.max = 800000;
             policy->max = 800000;
-            cpufreq_cpu_put(policy);
+/* dave */
+	    lMaxOldFreq = policy->min;
+            lPolicyMaxOldFreq = policy->user_policy.min;
+            policy->user_policy.min = 800000;
+            policy->min = 800000;
+/* dave */
+	    cpufreq_cpu_put(policy);
             uIsSuspended = 1;
         } else {
             if (lMinOldFreq < 100000) {
@@ -211,6 +219,10 @@ void request_suspend_state(suspend_state_t new_state)
             }
             policy->max = lMinOldFreq;
             policy->user_policy.max = lPolicyMinOldFreq;
+/* dave */
+            policy->min = lMaxOldFreq;
+            policy->user_policy.min = lPolicyMaxOldFreq;
+/* dave */
             cpufreq_cpu_put(policy);
             uIsSuspended = 0;
         }

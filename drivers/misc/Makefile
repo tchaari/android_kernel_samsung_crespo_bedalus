@@ -60,3 +60,4 @@ obj-$(CONFIG_SAMSUNG_MODEMCTL) 	+= samsung_modemctl/
 obj-$(CONFIG_GENERIC_BLN) 	+= bln.o
 obj-$(CONFIG_CPU_DIDLE)		+= deep_idle.o
 obj-$(CONFIG_BLX)		+= blx.o
+obj-$(CONFIG_BLD)		+= bld.o

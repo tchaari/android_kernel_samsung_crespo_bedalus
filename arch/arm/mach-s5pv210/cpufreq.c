@@ -243,6 +243,11 @@ static int s5pv210_target(struct cpufreq_policy *policy,
                 policy->user_policy.max = 800000;
                 policy->max = 800000;
             }
+/* dave */
+	if (policy->min != 800000) {
+                policy->user_policy.min = 800000;
+                policy->min = 800000;
+            }
         }
     }
 #endif

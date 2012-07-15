@@ -27,12 +27,14 @@
 #include "power.h"
 
 #ifdef CONFIG_CPU_DIDLE
-static unsigned long lMinOldFreq=0;
-static unsigned long lPolicyMinOldFreq=0;
-static unsigned long lMaxOldFreq=0;
-static unsigned long lPolicyMaxOldFreq=0;
+static unsigned long lMinOldFreq;
+static unsigned long lPolicyMinOldFreq;
+static unsigned long lMaxOldFreq;
+static unsigned long lPolicyMaxOldFreq;
 unsigned int uIsSuspended;
 struct cpufreq_policy *policy;
+//struct cpufreq_governor old_gov = policy->governor;
+//struct cpufreq_governor *gov = &cpufreq_gov_performance;
 #endif
 
 enum {
@@ -201,37 +203,32 @@ void request_suspend_state(suspend_state_t new_state)
 	if (deepidle_is_enabled()) 
 	{
 		policy = cpufreq_cpu_get(0);
+		lMinOldFreq = policy->max;
+		lPolicyMinOldFreq = policy->user_policy.max;
+		lMaxOldFreq = policy->min;
+		lPolicyMaxOldFreq = policy->user_policy.min;
 		if ((new_state == PM_SUSPEND_MEM) && (uIsSuspended == 0))
 		{
 			lMinOldFreq = policy->max;
 			lPolicyMinOldFreq = policy->user_policy.max;
-			policy->user_policy.max = 800000;
-			policy->max = 800000; 
-			// dave insert
 			lMaxOldFreq = policy->min;
-			lPolicyMaxOldFreq = policy->user_policy.min;
+			lPolicyMaxOldFreq = policy->user_policy.min; //dave
+			//old_gov = policy->governor;
+			policy->user_policy.max = 800000;
+			policy->max = 800000;
 			policy->user_policy.min = 800000;
-			policy->min = 800000; // dave end
+			policy->min = 800000;			
+			//policy->governor = gov;
+			//__cpufreq_governor(policy, CPUFREQ_GOV_START);
 			cpufreq_cpu_put(policy);
 			uIsSuspended = 1;
 		} 
 		else 
 		{
-			if (lMinOldFreq == 0)
-			{
-				lMinOldFreq = policy->max;
-				lPolicyMinOldFreq = policy->user_policy.max;
-			}
 			policy->max = lMinOldFreq;
 			policy->user_policy.max = lPolicyMinOldFreq; 
-			// dave insert
-			if (lMaxOldFreq == 0)
-			{
-				lMaxOldFreq = policy->min;
-				lPolicyMaxOldFreq = policy->user_policy.min;
-			}
 			policy->min = lMaxOldFreq;
-			policy->user_policy.min = lPolicyMaxOldFreq; // dave end
+			policy->user_policy.min = lPolicyMaxOldFreq; // dave
 			cpufreq_cpu_put(policy);
 			uIsSuspended = 0;
 		}

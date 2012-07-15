@@ -205,13 +205,13 @@ void request_suspend_state(suspend_state_t new_state)
 		{
 			lMinOldFreq = policy->max;
 			lPolicyMinOldFreq = policy->user_policy.max;
-			policy->user_policy.max = 800000;
-			policy->max = 800000; 
+			policy->user_policy.max = 400000;
+			policy->max = 400000; 
 			// dave insert
 			lMaxOldFreq = policy->min;
 			lPolicyMaxOldFreq = policy->user_policy.min;
-			policy->user_policy.min = 800000;
-			policy->min = 800000; // dave end
+			policy->user_policy.min = 400000;
+			policy->min = 400000; // dave end
 			cpufreq_cpu_put(policy);
 			uIsSuspended = 1;
 		} 

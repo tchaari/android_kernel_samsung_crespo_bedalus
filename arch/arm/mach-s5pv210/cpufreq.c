@@ -234,23 +234,25 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	if (relation & ENABLE_FURTHER_CPUFREQ)
 		no_cpufreq_access = false;
 
+/* not necessary?
 #ifdef CONFIG_CPU_DIDLE
     // Ensures no application decreases the min freq when deepidle enabled at
     // suspend mement
-    if (deepidle_is_enabled()) {
-        if (uIsSuspended == 1) {
-            if (policy->max != 800000) {
-                policy->user_policy.max = 800000;
-                policy->max = 800000;
-            }
-/* dave */
-	if (policy->min != 800000) {
-                policy->user_policy.min = 800000;
-                policy->min = 800000;
-            }
-        }
-    }
-#endif
+	if ((deepidle_is_enabled()) && (uIsSuspended == 1)) 
+	{
+		if (policy->max != 800000)
+		{
+			policy->user_policy.max = 800000;
+			policy->max = 800000;
+		}
+		// dave: force 800MHz min
+		if (policy->min != 800000)
+		{
+			policy->user_policy.min = 800000;
+			policy->min = 800000;
+		}  // END dave
+	}
+#endif */
 
 	if (no_cpufreq_access) {
 #ifdef CONFIG_PM_VERBOSE
@@ -366,7 +368,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		} while (reg & ((1 << 7) | (1 << 3)));
 
 		/*
-		 * 3. DMC1 refresh count for 133Mhz if (index == L7) is
+		 * 3. DMC1 refresh count for 133Mhz if (index == L5) is
 		 * true refresh counter is already programed in upper
 		 * code. 0x287@83Mhz
 		 */
@@ -496,7 +498,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 
 		/*
 		 * 10. DMC1 refresh counter
-		 * L7 : DMC1 = 100Mhz 7.8us/(1/100) = 0x30c
+		 * L5 : DMC1 = 100Mhz 7.8us/(1/100) = 0x30c
 		 * Others : DMC1 = 200Mhz 7.8us/(1/200) = 0x618
 		 */
 		if (!bus_speed_changing)
@@ -504,7 +506,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	}
 
 	/*
-	 * L7 level need to change memory bus speed, hence onedram clock divier
+	 * L5 level need to change memory bus speed, hence onedram clock divier
 	 * and memory refresh parameter should be changed
 	 */
 	if (bus_speed_changing) {
@@ -690,7 +692,7 @@ EXPORT_SYMBOL(liveoc_update);
 
 unsigned long get_gpuminfreq(void)
 {
-    return s5pv210_freq_table[L6].frequency;
+    return s5pv210_freq_table[L5].frequency;
 }
 EXPORT_SYMBOL(get_gpuminfreq);
 #endif

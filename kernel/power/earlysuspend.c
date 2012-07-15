@@ -191,43 +191,55 @@ void request_suspend_state(suspend_state_t new_state)
 		queue_work(suspend_work_queue, &late_resume_work);
 	}
 	requested_suspend_state = new_state;
-#ifdef CONFIG_CPU_DIDLE
-    /* Increases the CPU min speed if we have deepidle enabled and we go into
-       suspend mode. This is fully independent of the governor, so we can add
-       or remove our favourite governor */
+	
+	#ifdef CONFIG_CPU_DIDLE
+	
+	/* Increases the CPU min speed if we have deepidle enabled and we go into
+	suspend mode. This is fully independent of the governor, so we can add
+	or remove our favourite governor */
 
-    if (deepidle_is_enabled()) {
-        policy = cpufreq_cpu_get(0);
-        if ((new_state == PM_SUSPEND_MEM) && (uIsSuspended == 0)) {
-            lMinOldFreq = policy->max;
-            lPolicyMinOldFreq = policy->user_policy.max;
-            policy->user_policy.max = 800000;
-            policy->max = 800000;
-/* dave */
-	    lMaxOldFreq = policy->min;
-            lPolicyMaxOldFreq = policy->user_policy.min;
-            policy->user_policy.min = 800000;
-            policy->min = 800000;
-/* dave */
-	    cpufreq_cpu_put(policy);
-            uIsSuspended = 1;
-        } else {
-            if (lMinOldFreq < 100000) {
-                lMinOldFreq = policy->max;
-                lPolicyMinOldFreq = policy->user_policy.max;
-                uIsSuspended = 0;
-            }
-            policy->max = lMinOldFreq;
-            policy->user_policy.max = lPolicyMinOldFreq;
-/* dave */
-            policy->min = lMaxOldFreq;
-            policy->user_policy.min = lPolicyMaxOldFreq;
-/* dave */
-            cpufreq_cpu_put(policy);
-            uIsSuspended = 0;
-        }
-    }
-#endif
+	if (deepidle_is_enabled()) 
+	{
+		policy = cpufreq_cpu_get(0);
+		if ((new_state == PM_SUSPEND_MEM) && (uIsSuspended == 0))
+		{
+			lMinOldFreq = policy->max;
+			lPolicyMinOldFreq = policy->user_policy.max;
+			policy->user_policy.max = 800000;
+			policy->max = 800000; 
+			// dave insert
+			lMaxOldFreq = policy->min;
+			lPolicyMaxOldFreq = policy->user_policy.min;
+			policy->user_policy.min = 800000;
+			policy->min = 800000; // dave end
+			cpufreq_cpu_put(policy);
+			uIsSuspended = 1;
+		} 
+		else 
+		{
+			if (lMinOldFreq < 100000)
+			{
+				lMinOldFreq = policy->max;
+				lPolicyMinOldFreq = policy->user_policy.max;
+				uIsSuspended = 0;
+			}
+			policy->max = lMinOldFreq;
+			policy->user_policy.max = lPolicyMinOldFreq; 
+			// dave insert
+			if (lMaxOldFreq < 100000)
+			{
+				lMaxOldFreq = policy->min;
+				lPolicyMaxOldFreq = policy->user_policy.min;
+				uIsSuspended = 0;
+			}
+			policy->min = lMaxOldFreq;
+			policy->user_policy.min = lPolicyMaxOldFreq; // dave end
+			cpufreq_cpu_put(policy);
+			uIsSuspended = 0;
+		}
+	}
+
+	#endif
 	spin_unlock_irqrestore(&state_lock, irqflags);
 }
 

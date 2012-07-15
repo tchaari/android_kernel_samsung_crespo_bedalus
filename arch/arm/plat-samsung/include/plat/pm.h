@@ -14,7 +14,10 @@
  * called from board at initialisation time to setup the power
  * management
 */
-
+#ifdef CONFIG_S5P_LPAUDIO
+#include <linux/wakelock.h>
+#include <mach/cpuidle.h>
+#endif /* CONFIG_S5P_LPAUDIO */
 #include <linux/irq.h>
 
 struct sys_device;
@@ -30,6 +33,9 @@ static inline int s3c_pm_init(void)
 	return 0;
 }
 #endif
+
+#define SLEEP_MODE 0
+#define IDLE2_MODE 1
 
 /* configuration for the IRQ mask over sleep */
 extern unsigned long s3c_irqwake_intmask;

@@ -559,6 +559,55 @@ static const struct file_operations wakelock_stats_fops = {
 	.release = single_release,
 };
 
+#ifdef CONFIG_S5P_LPAUDIO
+static int has_wake_lock_internal(const char *name)
+{
+	int ret = 0;
+	unsigned long irqflags;
+	struct wake_lock *lock, *n;
+
+	spin_lock_irqsave(&list_lock, irqflags);
+	list_for_each_entry_safe(lock, n, &active_wake_locks[WAKE_LOCK_SUSPEND], link) {
+		if (lock->flags & WAKE_LOCK_AUTO_EXPIRE) {
+			long timeout = lock->expires - jiffies;
+			if (timeout > 0) {
+				if (strcmp(lock->name, name) == 0) {
+					ret = 1;
+					spin_unlock_irqrestore(&list_lock, irqflags);
+					return ret;
+				}
+			}
+		} else {
+			if (strcmp(lock->name, name) == 0) {
+				ret = 1;
+				spin_unlock_irqrestore(&list_lock, irqflags);
+				return ret;
+			}
+		}
+	}
+	spin_unlock_irqrestore(&list_lock, irqflags);
+	return ret;
+}
+
+int has_audio_wake_lock(void)
+{
+	int ret = 0;
+
+//	printk("wake_lock: PowerManagerService:%d, vbus_present:%d\n", has_wake_lock_internal("PowerManagerService"), has_wake_lock_internal("vbus_present"));
+	/*
+	 * We use the PowerManagerService wakelock because AudioOut_1 is now a partial wakelock, which is held as
+	 * PowerManagerService. Not ideal, but better than nothing.
+	 */
+	if (has_wake_lock_internal("PowerManagerService") && !has_wake_lock_internal("vbus_present"))
+	{
+		ret = 1;
+		return ret;
+	}
+	return ret;
+}
+EXPORT_SYMBOL(has_audio_wake_lock);
+#endif /* CONFIG_S5P_LPAUDIO */
+
 static int __init wakelocks_init(void)
 {
 	int ret;

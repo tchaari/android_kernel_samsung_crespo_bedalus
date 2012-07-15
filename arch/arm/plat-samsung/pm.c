@@ -334,6 +334,9 @@ static int s3c_pm_enter(suspend_state_t state)
 		return -EINVAL;
 	}
 
+	/* set flag for sleep mode idle2 flag is also reserved */
+	__raw_writel(SLEEP_MODE, S5P_INFORM1);
+
 	/* save all necessary core registers not covered by the drivers */
 
 	s3c_pm_save_gpios();

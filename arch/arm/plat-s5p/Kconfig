@@ -103,6 +103,13 @@ config S5P_DEV_FB
 	help
 	  Compile in platform device definitions for FIMD controller
 
+config S5P_LPAUDIO
+	bool "Support S5P Low Power(LP) Audio"
+	depends on CPU_IDLE && PM && !S5PV210_CORESIGHT
+	default y
+	help
+	  s5pc11x low power audio enable / disable
+
 config S5P_HIGH_RES_TIMERS
 	bool "HRtimer and Dynamic Tick support"
 	select GENERIC_CLOCKEVENTS

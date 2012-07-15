@@ -27,10 +27,10 @@
 #include "power.h"
 
 #ifdef CONFIG_CPU_DIDLE
-static unsigned long lMinOldFreq;
-static unsigned long lPolicyMinOldFreq;
-static unsigned long lMaxOldFreq;
-static unsigned long lPolicyMaxOldFreq;
+static unsigned long lMinOldFreq=0;
+static unsigned long lPolicyMinOldFreq=0;
+static unsigned long lMaxOldFreq=0;
+static unsigned long lPolicyMaxOldFreq=0;
 unsigned int uIsSuspended;
 struct cpufreq_policy *policy;
 #endif
@@ -205,32 +205,30 @@ void request_suspend_state(suspend_state_t new_state)
 		{
 			lMinOldFreq = policy->max;
 			lPolicyMinOldFreq = policy->user_policy.max;
-			policy->user_policy.max = 400000;
-			policy->max = 400000; 
+			policy->user_policy.max = 800000;
+			policy->max = 800000; 
 			// dave insert
 			lMaxOldFreq = policy->min;
 			lPolicyMaxOldFreq = policy->user_policy.min;
-			policy->user_policy.min = 400000;
-			policy->min = 400000; // dave end
+			policy->user_policy.min = 800000;
+			policy->min = 800000; // dave end
 			cpufreq_cpu_put(policy);
 			uIsSuspended = 1;
 		} 
 		else 
 		{
-			if (lMinOldFreq < 100000)
+			if (lMinOldFreq == 0)
 			{
 				lMinOldFreq = policy->max;
 				lPolicyMinOldFreq = policy->user_policy.max;
-				uIsSuspended = 0;
 			}
 			policy->max = lMinOldFreq;
 			policy->user_policy.max = lPolicyMinOldFreq; 
 			// dave insert
-			if (lMaxOldFreq < 100000)
+			if (lMaxOldFreq == 0)
 			{
 				lMaxOldFreq = policy->min;
 				lPolicyMaxOldFreq = policy->user_policy.min;
-				uIsSuspended = 0;
 			}
 			policy->min = lMaxOldFreq;
 			policy->user_policy.min = lPolicyMaxOldFreq; // dave end

@@ -57,6 +57,10 @@
 #include "mfc_buffer_manager.h"
 #include "mfc_intr.h"
 
+#ifdef CONFIG_S5P_LPAUDIO
+#include <mach/cpuidle.h>
+#endif /* CONFIG_S5P_LPAUDIO */
+
 #define MFC_FW_NAME	"samsung_mfc_fw.bin"
 
 static struct resource *mfc_mem;
@@ -73,6 +77,9 @@ static int mfc_open(struct inode *inode, struct file *file)
 	mutex_lock(&mfc_mutex);
 
 	if (!mfc_is_running()) {
+#ifdef CONFIG_S5P_LPAUDIO
+		 s5p_set_lpaudio_lock(1);
+#endif /* CONFIG_S5P_LPAUDIO */
 		/* Turn on mfc power domain regulator */
 		ret = regulator_enable(mfc_pd_regulator);
 		if (ret < 0) {
@@ -175,6 +182,9 @@ static int mfc_release(struct inode *inode, struct file *file)
 	ret = 0;
 
 	if (!mfc_is_running()) {
+#ifdef CONFIG_S5P_LPAUDIO
+		 s5p_set_lpaudio_lock(0);
+#endif /* CONFIG_S5P_LPAUDIO */
 		/* Turn off mfc power domain regulator */
 		ret = regulator_disable(mfc_pd_regulator);
 		if (ret < 0) {

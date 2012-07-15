@@ -302,11 +302,11 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	cpufreq_notify_transition(&freqs, CPUFREQ_PRECHANGE);
 
 	/* Check if there need to change PLL */
-	if ((index <= L2) || (freqs.old >= s5pv210_freq_table[L1].frequency))
+	if ((index <= L1) || (freqs.old >= s5pv210_freq_table[L1].frequency))
 		pll_changing = 1;
 
 	/* Check if there need to change System bus clock */
-	if ((index == L5) || (freqs.old == s5pv210_freq_table[L4].frequency))
+	if ((index == L5) || (freqs.old == s5pv210_freq_table[L5].frequency))
 		bus_speed_changing = 1;
 
 #ifdef CONFIG_LIVE_OC

@@ -83,8 +83,8 @@ enum s5pv210_dmc_port {
 static struct cpufreq_frequency_table s5pv210_freq_table[] = {
 	{L0, 1200*1000},
 	{L1, 1000*1000},
-    	{L2, 800*1000},
-    	{L3, 400*1000},
+    {L2, 800*1000},
+   	{L3, 400*1000},
 	{L4, 200*1000},
 	{L5, 100*1000},
 	{0, CPUFREQ_TABLE_END},};
@@ -151,19 +151,6 @@ static u32 clkdiv_val[8][11] = {
 	{7, 7, 0, 0, 7, 0, 9, 0, 7, 0, 0}
 };
 
-#ifdef CONFIG_LIVE_OC
-extern void cpufreq_stats_reset(void);
-
-static bool pllbus_changing = false;
-
-static int oc_value = 100;
-
-static unsigned long sleep_freq;
-static unsigned long original_fclk[] = {1460000, 1300000, 1200000, 1000000, 800000, 800000, 800000, 800000};
-
-static u32 apll_values[sizeof(original_fclk) / sizeof(unsigned long)];
-#endif
-
 /*
  * This function set DRAM refresh counter
  * accoriding to operating frequency of DRAM
@@ -192,14 +179,8 @@ static void s5pv210_set_refresh(enum s5pv210_dmc_port ch, unsigned long freq)
 	tmp1 = s5pv210_dram_conf[ch].refresh;
 
 	do_div(tmp1, tmp);
-#ifdef CONFIG_LIVE_OC
-	if (ch == DMC1)
-	    __raw_writel((tmp1 * oc_value) / 100, reg);
-	else
-	    __raw_writel(tmp1, reg);
-#else
+
 	__raw_writel(tmp1, reg);
-#endif
 }
 
 int s5pv210_verify_speed(struct cpufreq_policy *policy)
@@ -234,25 +215,20 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	if (relation & ENABLE_FURTHER_CPUFREQ)
 		no_cpufreq_access = false;
 
-/* not necessary?
 #ifdef CONFIG_CPU_DIDLE
     // Ensures no application decreases the min freq when deepidle enabled at
     // suspend mement
 	if ((deepidle_is_enabled()) && (uIsSuspended == 1)) 
 	{
-		if (policy->max != 800000)
+		printk("* * * DAVE: In mach-s5pv-cpufreq.c *");
+		if (policy->max != 400000)
 		{
-			policy->user_policy.max = 800000;
-			policy->max = 800000;
+			policy->user_policy.max = 400000;
+			policy->max = 400000;
+			printk("* * * Policy max forced to 400MHz"); 
 		}
-		// dave: force 800MHz min
-		if (policy->min != 800000)
-		{
-			policy->user_policy.min = 800000;
-			policy->min = 800000;
-		}  // END dave
 	}
-#endif */
+#endif
 
 	if (no_cpufreq_access) {
 #ifdef CONFIG_PM_VERBOSE
@@ -308,14 +284,6 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	/* Check if there need to change System bus clock */
 	if ((index == L5) || (freqs.old == s5pv210_freq_table[L5].frequency))
 		bus_speed_changing = 1;
-
-#ifdef CONFIG_LIVE_OC
-	if (pllbus_changing) {
-		pll_changing = 1;
-		bus_speed_changing = 1;
-		pllbus_changing = false;
-	}
-#endif
 
 	if (bus_speed_changing) {
 		/*
@@ -413,7 +381,8 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	/* ARM MCS value changed */
 	reg = __raw_readl(S5P_ARM_MCS_CON);
 	reg &= ~0x3;
-	if (index >= L5)
+	//was L4
+	if (index >= L4)
 		reg |= 0x3;
 	else
 		reg |= 0x1;
@@ -578,124 +547,6 @@ static int check_mem_type(void __iomem *dmc_reg)
 	return val >> 8;
 }
 
-#ifdef CONFIG_LIVE_OC
-static int find_divider(int freq)
-{
-    int i, divider;
-
-    divider = 24;
-
-    if (freq % 3 == 0) {
-	freq /= 3;
-	divider /= 3;
-    }
- 
-    for (i = 0; i < 3; i++) {
-	if (freq % 2 == 0) {
-	    freq /= 2;
-	    divider /= 2;
-	}
-    }
-
-    return divider;
-}
-
-static void liveoc_init(void)
-{
-    int i, index, divider;
-
-    unsigned long fclk;
-
-    i = 0;
-
-    while (s5pv210_freq_table[i].frequency != CPUFREQ_TABLE_END) {
-	index = s5pv210_freq_table[i].index;
-
-	fclk = original_fclk[index] / 1000;
-
-	divider = find_divider(fclk);
-
-	apll_values[index] = ((1 << 31) | (((fclk * divider) / 24) << 16) | (divider << 8) | (1));
-
-	i++;
-    }
-
-    sleep_freq = SLEEP_FREQ;
-
-    return;
-}
-
-void liveoc_update(unsigned int oc_value, unsigned int oc_low_freq, unsigned int oc_high_freq)
-{
-    int i, index, index_min = L0, index_max = L0, divider;
-
-    unsigned long fclk;
-
-    struct cpufreq_policy * policy = cpufreq_cpu_get(0);
-
-    mutex_lock(&set_freq_lock);
-
-    i = 0;
-
-    while (s5pv210_freq_table[i].frequency != CPUFREQ_TABLE_END) {
-        
-        index = s5pv210_freq_table[i].index;
-        
-        if (s5pv210_freq_table[i].frequency == policy->user_policy.min)
-            index_min = index;
-        
-        if (s5pv210_freq_table[i].frequency == policy->user_policy.max)
-            index_max = index;
-        
-        if(oc_low_freq < oc_high_freq)
-            if(s5pv210_freq_table[i].frequency >= oc_low_freq && s5pv210_freq_table[i].frequency <= oc_high_freq)
-                fclk = (original_fclk[index] * oc_value) / 100;
-            else
-                fclk = original_fclk[index];
-        
-            else
-                if(s5pv210_freq_table[i].frequency >= oc_low_freq || s5pv210_freq_table[i].frequency <= oc_high_freq)
-                    fclk = (original_fclk[index] * oc_value) / 100;
-                else
-                    fclk = original_fclk[index];
-        
-        s5pv210_freq_table[i].frequency = fclk / (clkdiv_val[index][0] + 1);
-        
-        if (original_fclk[index] / (clkdiv_val[index][0] + 1) == SLEEP_FREQ)
-            sleep_freq = s5pv210_freq_table[i].frequency;
-        
-        fclk /= 1000;
-        
-        divider = find_divider(fclk);
-        
-        apll_values[index] = ((1 << 31) | (((fclk * divider) / 24) << 16) | (divider << 8) | (1));
-        
-        i++;
-    }
-
-    cpufreq_frequency_table_cpuinfo(policy, s5pv210_freq_table);
-
-    policy->user_policy.min = s5pv210_freq_table[index_min].frequency;
-    policy->user_policy.max = s5pv210_freq_table[index_max].frequency;  
-
-    pllbus_changing = true;
-
-    mutex_unlock(&set_freq_lock);
-
-#ifdef CONFIG_CPU_FREQ_STAT
-    cpufreq_stats_reset();
-#endif
-
-    return;
-}
-EXPORT_SYMBOL(liveoc_update);
-
-unsigned long get_gpuminfreq(void)
-{
-    return s5pv210_freq_table[L5].frequency;
-}
-EXPORT_SYMBOL(get_gpuminfreq);
-#endif
 
 #ifdef CONFIG_CUSTOM_VOLTAGE
 static const int num_freqs = sizeof(dvs_conf) / sizeof(struct s5pv210_dvs_conf);
@@ -827,19 +678,13 @@ static int __init s5pv210_cpu_init(struct cpufreq_policy *policy)
 	cpufreq_frequency_table_get_attr(s5pv210_freq_table, policy->cpu);
 
 	policy->cpuinfo.transition_latency = 40000;
-    
-    
-#ifdef CONFIG_LIVE_OC
-	liveoc_init();
-#endif
-    
-    ret = cpufreq_frequency_table_cpuinfo(policy, s5pv210_freq_table);
-    
+
+	ret = cpufreq_frequency_table_cpuinfo(policy, s5pv210_freq_table);
+
 	if (!ret)
 	    policy->max = 1000000;
-    
-	return ret;
 
+	return ret;
 }
 
 static int s5pv210_cpufreq_notifier_event(struct notifier_block *this,
@@ -849,27 +694,15 @@ static int s5pv210_cpufreq_notifier_event(struct notifier_block *this,
 
 	switch (event) {
 	case PM_SUSPEND_PREPARE:
-#ifdef CONFIG_LIVE_OC
-		ret = cpufreq_driver_target(cpufreq_cpu_get(0), sleep_freq,
-				DISABLE_FURTHER_CPUFREQ);
-#else
 		ret = cpufreq_driver_target(cpufreq_cpu_get(0), SLEEP_FREQ,
 				DISABLE_FURTHER_CPUFREQ);
-#endif
 		if (ret < 0)
 			return NOTIFY_BAD;
 		return NOTIFY_OK;
 	case PM_POST_RESTORE:
 	case PM_POST_SUSPEND:
-#ifdef CONFIG_LIVE_OC
-		pllbus_changing = true;
-
-		cpufreq_driver_target(cpufreq_cpu_get(0), sleep_freq,
-				ENABLE_FURTHER_CPUFREQ);
-#else
 		cpufreq_driver_target(cpufreq_cpu_get(0), SLEEP_FREQ,
 				ENABLE_FURTHER_CPUFREQ);
-#endif
 		return NOTIFY_OK;
 	}
 	return NOTIFY_DONE;
@@ -880,13 +713,9 @@ static int s5pv210_cpufreq_reboot_notifier_event(struct notifier_block *this,
 {
 	int ret = 0;
 
-#ifdef CONFIG_LIVE_OC
-	ret = cpufreq_driver_target(cpufreq_cpu_get(0), sleep_freq,
-			DISABLE_FURTHER_CPUFREQ);
-#else
 	ret = cpufreq_driver_target(cpufreq_cpu_get(0), SLEEP_FREQ,
 			DISABLE_FURTHER_CPUFREQ);
-#endif
+
 	if (ret < 0)
 		return NOTIFY_BAD;
 

@@ -1,6 +1,8 @@
 /* kernel/power/earlysuspend.c
  *
  * Copyright (C) 2005-2008 Google, Inc.
+ * Copyright (c) 2010 Samsung Electronics
+ * Copyright (c) 2012 Will Tisdale - <willtisdale@gmail.com>
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -13,6 +15,12 @@
  *
  */
 
+
+
+#include <linux/cpufreq.h>
+#include <linux/interrupt.h>
+#include <linux/deep_idle.h>
+
 #include <linux/earlysuspend.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
@@ -20,23 +28,11 @@
 #include <linux/syscalls.h> /* sys_sync */
 #include <linux/wakelock.h>
 #include <linux/workqueue.h>
-#ifdef CONFIG_CPU_DIDLE
-
-#include <linux/cpufreq.h>
-#include <linux/deep_idle.h>
-#endif
 #include "power.h"
 
-#ifdef CONFIG_CPU_DIDLE
-struct cpufreq_governor *gov = &cpufreq_gov_performance;
-//static unsigned long lMinOldFreq;
-//static unsigned long lPolicyMinOldFreq;
-unsigned int uIsSuspended;
-static bool davebool = 1;
-struct cpufreq_policy *policy;
-struct cpufreq_policy old_policy;
 
-#endif
+#define DISABLE_FURTHER_CPUFREQ 	0x10
+#define ENABLE_FURTHER_CPUFREQ 		0x20
 
 enum {
 	DEBUG_USER_STATE = 1U << 0,
@@ -53,6 +49,7 @@ static void late_resume(struct work_struct *work);
 static DECLARE_WORK(early_suspend_work, early_suspend);
 static DECLARE_WORK(late_resume_work, late_resume);
 static DEFINE_SPINLOCK(state_lock);
+static int ret;
 enum {
 	SUSPEND_REQUESTED = 0x1,
 	SUSPENDED = 0x2,
@@ -94,8 +91,26 @@ static void early_suspend(struct work_struct *work)
 
 	mutex_lock(&early_suspend_lock);
 	spin_lock_irqsave(&state_lock, irqflags);
-	if (state == SUSPEND_REQUESTED)
+	if (state == SUSPEND_REQUESTED) {
 		state |= SUSPENDED;
+
+		//dave
+		if (deepidle_is_enabled()) 
+		{
+			preempt_enable();
+			local_irq_enable();
+			ret = cpufreq_driver_target(cpufreq_cpu_get(0), 400000,
+					DISABLE_FURTHER_CPUFREQ);
+			if (ret < 0)
+				printk(KERN_WARNING "%s: Error %d locking CPUfreq\n", __func__, ret);
+			else
+				printk(KERN_INFO "%s: CPUfreq locked to 400MHz\n", __func__);
+			local_irq_disable();
+			preempt_disable();
+		}
+		//dave: method copied from thalamus
+
+	}
 	else
 		abort = 1;
 	spin_unlock_irqrestore(&state_lock, irqflags);
@@ -137,8 +152,25 @@ static void late_resume(struct work_struct *work)
 
 	mutex_lock(&early_suspend_lock);
 	spin_lock_irqsave(&state_lock, irqflags);
-	if (state == SUSPENDED)
+	if (state == SUSPENDED) {
+		//dave
+		if (deepidle_is_enabled()) 
+		{
+			preempt_enable();
+			local_irq_enable();
+			ret = cpufreq_driver_target(cpufreq_cpu_get(0), 400000,
+					ENABLE_FURTHER_CPUFREQ);
+			if (ret < 0)
+				printk(KERN_WARNING "%s: Error %d unlocking CPUfreq\n", __func__, ret);
+			else
+				printk(KERN_INFO "%s: CPUfreq unlocked from 400MHz\n", __func__);
+			local_irq_disable();
+			preempt_disable();
+		}
+		//dave: method copied from thalamus
+
 		state &= ~SUSPENDED;
+	}
 	else
 		abort = 1;
 	spin_unlock_irqrestore(&state_lock, irqflags);
@@ -194,40 +226,6 @@ void request_suspend_state(suspend_state_t new_state)
 		queue_work(suspend_work_queue, &late_resume_work);
 	}
 	requested_suspend_state = new_state;
-	
-	#ifdef CONFIG_CPU_DIDLE
-	
-	/* Increases the CPU min speed if we have deepidle enabled and we go into
-	suspend mode. This is fully independent of the governor, so we can add
-	or remove our favourite governor */
-
-	if (deepidle_is_enabled())
-	{
-		policy = cpufreq_cpu_get(0);
-		if (davebool)
-		{
-			old_policy = *policy; //store the old policy
-			// see include/linux/cpufreq.h for cpufreq_governor definition
-			// and LINE 1606 is handy.
-			davebool = 0;
-		}
-		if ((new_state == PM_SUSPEND_MEM) && (uIsSuspended == 0))
-		{
-			policy->user_policy.governor = gov; // gov means performance governor
-			policy->user_policy.max = 400000; // the most efficient DI state
-			uIsSuspended = 1;
-			davebool = 0;
-		} 
-		else
-		{
-			*policy = old_policy;
-			uIsSuspended = 0;
-			davebool = 1;
-		}
-		cpufreq_cpu_put(policy);
-	}
-
-	#endif
 	spin_unlock_irqrestore(&state_lock, irqflags);
 }
 

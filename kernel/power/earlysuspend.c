@@ -21,21 +21,21 @@
 #include <linux/wakelock.h>
 #include <linux/workqueue.h>
 #ifdef CONFIG_CPU_DIDLE
+
 #include <linux/cpufreq.h>
 #include <linux/deep_idle.h>
 #endif
 #include "power.h"
 
 #ifdef CONFIG_CPU_DIDLE
-static unsigned long lMinOldFreq;
-static unsigned long lPolicyMinOldFreq;
-static unsigned long lMaxOldFreq;
-static unsigned long lPolicyMaxOldFreq;
+struct cpufreq_governor *gov = &cpufreq_gov_performance;
+//static unsigned long lMinOldFreq;
+//static unsigned long lPolicyMinOldFreq;
 unsigned int uIsSuspended;
-bool davebool = 1;
+static bool davebool = 1;
 struct cpufreq_policy *policy;
-//struct cpufreq_governor old_gov = policy->governor;
-//struct cpufreq_governor *gov = &cpufreq_gov_performance;
+struct cpufreq_policy old_policy;
+
 #endif
 
 enum {
@@ -201,40 +201,30 @@ void request_suspend_state(suspend_state_t new_state)
 	suspend mode. This is fully independent of the governor, so we can add
 	or remove our favourite governor */
 
-	if (deepidle_is_enabled()) 
+	if (deepidle_is_enabled())
 	{
 		policy = cpufreq_cpu_get(0);
 		if (davebool)
 		{
-			lMinOldFreq = policy->max;
-			lPolicyMinOldFreq = policy->user_policy.max;
-			lMaxOldFreq = policy->min;
-			lPolicyMaxOldFreq = policy->user_policy.min;
+			old_policy = *policy; //store the old policy
+			// see include/linux/cpufreq.h for cpufreq_governor definition
+			// and LINE 1606 is handy.
 			davebool = 0;
-		}		
+		}
 		if ((new_state == PM_SUSPEND_MEM) && (uIsSuspended == 0))
 		{
-			//old_gov = policy->governor;
-			policy->user_policy.max = 400000;
-			policy->max = 400000;
-			policy->user_policy.min = 400000;
-			policy->min = 400000;			
-			//policy->governor = gov;
-			//__cpufreq_governor(policy, CPUFREQ_GOV_START);
-			cpufreq_cpu_put(policy);
+			policy->user_policy.governor = gov; // gov means performance governor
+			policy->user_policy.max = 400000; // the most efficient DI state
 			uIsSuspended = 1;
 			davebool = 0;
 		} 
-		else 
+		else
 		{
-			policy->max = lMinOldFreq;
-			policy->user_policy.max = lPolicyMinOldFreq; 
-			policy->min = lMaxOldFreq;
-			policy->user_policy.min = lPolicyMaxOldFreq; // dave
-			cpufreq_cpu_put(policy);
+			*policy = old_policy;
 			uIsSuspended = 0;
 			davebool = 1;
 		}
+		cpufreq_cpu_put(policy);
 	}
 
 	#endif

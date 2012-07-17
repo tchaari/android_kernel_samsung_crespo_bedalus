@@ -113,8 +113,8 @@ static void early_suspend(struct work_struct *work)
 	sys_sync();
 #ifdef CONFIG_S5P_IDLE2
 	if (has_audio_wake_lock()) {
-		printk("********** Toggle cpuidle to IDLE2\n");
-		s5p_setup_lpaudio(IDLE2_MODE);
+		printk("%s: Partial wakelock held & screen off, enabling IDLE2 mode\n", __func__);
+		s5p_setup_idle2(IDLE2_MODE);
 		previous_idle_mode = IDLE2_MODE;
 	}
 #endif /* CONFIG_S5P_IDLE2 */
@@ -147,8 +147,8 @@ static void late_resume(struct work_struct *work)
 
 #ifdef CONFIG_S5P_IDLE2
 	if (previous_idle_mode == IDLE2_MODE) {
-		printk("********** Toggle cpuidle to NORMAL\n");
-		s5p_setup_lpaudio(NORMAL_MODE);
+		printk("%s: Screen on, disabling IDLE2 mode\n", __func__);
+		s5p_setup_idle2(NORMAL_MODE);
 		previous_idle_mode = NORMAL_MODE;
 	}
 #endif /* CONFIG_S5P_IDLE2 */

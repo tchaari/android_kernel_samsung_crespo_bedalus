@@ -129,8 +129,12 @@ inline static bool check_g3d_op(void)
 
 	val    = __raw_readl(S5P_CLKGATE_IP0);
 
-	if(val & S5P_CLKGATE_IP0_G3D)
+	if(val & S5P_CLKGATE_IP0_G3D) {
+#ifdef CONFIG_S5P_IDLE2_DEBUG
+		printk(KERN_INFO "%s: returns true\n", __func__);
+#endif
 		return true;
+	}
 	else
 		return false;
 }
@@ -142,7 +146,7 @@ inline static bool check_g3d_op(void)
 #define S3C_HSMMC_CLOCK_CARD_EN	0x0004
 
 
-/* If SD/MMC interface is working: return = true or false */
+/* If SD/MMC interface is working: return = true */
 inline static bool check_sdmmc_op(unsigned int ch)
 {
 	unsigned int reg1, reg2;
@@ -161,7 +165,9 @@ inline static bool check_sdmmc_op(unsigned int ch)
 
 	if ((reg1 & (S3C_HSMMC_CMD_INHIBIT | S3C_HSMMC_DATA_INHIBIT)) ||
 			(reg2 & (S3C_HSMMC_CLOCK_CARD_EN))) {
-//		printk(KERN_INFO "sdmmc[%d] is working\n", ch);
+#ifdef CONFIG_S5P_IDLE2_DEBUG
+		printk(KERN_INFO "%s: returns true\n", __func__);
+#endif
 		return true;
 	} else {
 		return false;
@@ -196,7 +202,9 @@ inline static bool check_onenand_op(void)
 	val = __raw_readl(base_addr + 0x0000010c);
 
 	if (val & 0x1) {
-//		printk(KERN_INFO "Onenand is working\n");
+#ifdef CONFIG_S5P_IDLE2_DEBUG
+		printk(KERN_INFO "%s: returns true\n", __func__);
+#endif
 		return true;
 	}
 	return false;
@@ -209,7 +217,9 @@ inline static bool check_dma_op(void)
 	val = __raw_readl(S5P_CLKGATE_IP0);
 	if (val & (S5P_CLKGATE_IP0_MDMA | S5P_CLKGATE_IP0_PDMA0
 					| S5P_CLKGATE_IP0_PDMA1)) {
-		printk(KERN_INFO "DMAis working\n");
+#ifdef CONFIG_S5P_IDLE2_DEBUG
+		printk(KERN_INFO "%s: returns true\n", __func__);
+#endif
 		return true;
 	}
 	return false;
@@ -218,25 +228,31 @@ inline static bool check_dma_op(void)
 extern void i2sdma_getpos(dma_addr_t *src);
 inline static bool check_idmapos(void)
 {
-        dma_addr_t src;
-        i2sdma_getpos(&src);
-        src = src & 0x3FFF;
-        src = 0x4000 - src;
-        if(src < 0x150){             // 0x150은 PCM data기준으로 약 2ms
-                return true;
-        }
-        else
-                return false;
+	dma_addr_t src;
+	i2sdma_getpos(&src);
+	src = src & 0x3FFF;
+	src = 0x4000 - src;
+	if(src < 0x150){
+#ifdef CONFIG_S5P_IDLE2_DEBUG
+		printk(KERN_INFO "%s: returns true\n", __func__);
+#endif
+		return true;
+	}
+	else
+		return false;
 }
 extern unsigned int get_rtc_cnt(void);
 inline static bool check_rtcint(void)
 {
-        unsigned int current_cnt = get_rtc_cnt();
-        if(current_cnt < 0x40){       // 0x40은 RTC clock인 32768기준으로 2ms임.
-                return true;
-        }
-        else
-                return false;
+	unsigned int current_cnt = get_rtc_cnt();
+	if(current_cnt < 0x40){
+#ifdef CONFIG_S5P_IDLE2_DEBUG
+		printk(KERN_INFO "%s: returns true\n", __func__);
+#endif
+		return true;
+	}
+	else
+		return false;
 }
 
 
@@ -327,7 +343,7 @@ inline static void s5p_enter_idle2(void)
 
 	/* To check VIC Status register before enter idle2 mode */
 	if (__raw_readl(S5P_VIC2REG(VIC_RAW_STATUS)) & 0x10000) {
-		printk(KERN_WARNING "*** Skipping IDLE2\n");
+		printk(KERN_WARNING "%s: Skipping IDLE2\n", __func__);
 		goto skipped_idle2;
 	}
 
@@ -338,7 +354,9 @@ inline static void s5p_enter_idle2(void)
 
 	/* Entering idle2 mode with WFI instruction */
 	if (s5p_idle2_save(regs_save) == 0) {
-		printk(KERN_WARNING "*** Entering IDLE2 mode\n");
+#ifdef CONFIG_S5P_IDLE2_DEBUG
+		printk(KERN_INFO "*** Entering IDLE2 mode\n");
+#endif
 		s5p_idle2();
 	}
 
@@ -369,10 +387,10 @@ skipped_idle2:
 static spinlock_t idle2_lock;
 int idle2_lock_count = 0;
 /*
- * flag = 0 : allow to enter lpaudio (idle, idle2) mode.
- * flag = 1 : not allow to enter lpaudio (idle, idle2) mode.
+ * flag = 0 : allow to enter idle2
+ * flag = 1 : don't allow to enter idle2
  */
-void s5p_set_lpaudio_lock(int flag)
+void s5p_set_idle2_lock(int flag)
 {
 	spin_lock(&idle2_lock);
 
@@ -387,19 +405,19 @@ void s5p_set_lpaudio_lock(int flag)
 
 	spin_unlock(&idle2_lock);
 }
-EXPORT_SYMBOL(s5p_set_lpaudio_lock);
+EXPORT_SYMBOL(s5p_set_idle2_lock);
 
-inline int s5p_get_lpaudio_lock(void)
+inline int s5p_get_idle2_lock(void)
 {
 	return idle2_lock_count;
 }
 
 inline static bool s5p_idle_bm_check(void)
 {
-	if (has_audio_wake_lock() && s5p_get_lpaudio_lock() == 0) {
-		if (loop_sdmmc_check() || check_onenand_op()
+	if (likely(has_audio_wake_lock() && s5p_get_idle2_lock() == 0)) {
+		if (unlikely(loop_sdmmc_check() || check_onenand_op()
 			|| check_dma_op() || check_g3d_op()
-			|| check_idmapos() || check_rtcint())
+			|| check_idmapos() || check_rtcint()))
 			return true;
 		else
 			return false;
@@ -408,7 +426,7 @@ inline static bool s5p_idle_bm_check(void)
 }
 
 /* Actual code that puts the SoC in different idle states */
-inline static int s5p_enter_idle_lpaudio(struct cpuidle_device *dev,
+inline static int s5p_enter_idle_idle2(struct cpuidle_device *dev,
 				struct cpuidle_state *state)
 {
 	struct timeval before, after;
@@ -428,15 +446,17 @@ inline static int s5p_enter_idle_lpaudio(struct cpuidle_device *dev,
 inline static int s5p_enter_idle_bm(struct cpuidle_device *dev,
 				struct cpuidle_state *state)
 {
-	if (s5p_idle_bm_check()) {
-//		printk(KERN_WARNING "s5p_idle_bm_check() - Entering IDLE\n");
+	if (unlikely(s5p_idle_bm_check())) {
+#ifdef CONFIG_S5P_IDLE2_DEBUG
+		printk("%s: s5p_idle_bm_check() true - Entering normal IDLE\n", __func__);
+#endif
 		return s5p_enter_idle_normal(dev, state);
 	}
 	else
-		return s5p_enter_idle_lpaudio(dev, state);
+		return s5p_enter_idle_idle2(dev, state);
 }
 
-int s5p_setup_lpaudio(unsigned int mode)
+int s5p_setup_idle2(unsigned int mode)
 {
 	struct cpuidle_device *device;
 
@@ -487,7 +507,7 @@ int s5p_setup_lpaudio(unsigned int mode)
 
 	return ret;
 }
-EXPORT_SYMBOL(s5p_setup_lpaudio);
+EXPORT_SYMBOL(s5p_setup_idle2);
 #endif /* CONFIG_S5P_IDLE2 */
 
 /* Initialize CPU idle by registering the idle states */
@@ -525,7 +545,7 @@ static int s5p_init_cpuidle(void)
 		BUG();
 		return -ENOMEM;
 	}
-	printk(KERN_INFO "cpuidle: IDLE2 support enabled - version 0.101 by <willtisdale@gmail.com>\n");
+	printk(KERN_INFO "cpuidle: IDLE2 support enabled - version 0.102 by <willtisdale@gmail.com>\n");
 	printk(KERN_INFO "cpuidle: phy_regs_save:0x%x\n", phy_regs_save);
 
 	spin_lock_init(&idle2_lock);

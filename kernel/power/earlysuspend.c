@@ -21,9 +21,9 @@
 #include <linux/wakelock.h>
 #include <linux/workqueue.h>
 
-#ifdef CONFIG_S5P_LPAUDIO
+#ifdef CONFIG_S5P_IDLE2
 #include <mach/cpuidle.h>
-#endif /* CONFIG_S5P_LPAUDIO */
+#endif /* CONFIG_S5P_IDLE2 */
 
 #include "power.h"
 
@@ -111,13 +111,13 @@ static void early_suspend(struct work_struct *work)
 		pr_info("early_suspend: sync\n");
 
 	sys_sync();
-#ifdef CONFIG_S5P_LPAUDIO
+#ifdef CONFIG_S5P_IDLE2
 	if (has_audio_wake_lock()) {
-		printk("********** Toggle cpuidle to LPAUDIO\n");
-		s5p_setup_lpaudio(LPAUDIO_MODE);
-		previous_idle_mode = LPAUDIO_MODE;
+		printk("********** Toggle cpuidle to IDLE2\n");
+		s5p_setup_lpaudio(IDLE2_MODE);
+		previous_idle_mode = IDLE2_MODE;
 	}
-#endif /* CONFIG_S5P_LPAUDIO */
+#endif /* CONFIG_S5P_IDLE2 */
 abort:
 	spin_lock_irqsave(&state_lock, irqflags);
 	if (state == SUSPEND_REQUESTED_AND_SUSPENDED)
@@ -145,13 +145,13 @@ static void late_resume(struct work_struct *work)
 		goto abort;
 	}
 
-#ifdef CONFIG_S5P_LPAUDIO
-	if (previous_idle_mode == LPAUDIO_MODE) {
+#ifdef CONFIG_S5P_IDLE2
+	if (previous_idle_mode == IDLE2_MODE) {
 		printk("********** Toggle cpuidle to NORMAL\n");
 		s5p_setup_lpaudio(NORMAL_MODE);
 		previous_idle_mode = NORMAL_MODE;
 	}
-#endif /* CONFIG_S5P_LPAUDIO */
+#endif /* CONFIG_S5P_IDLE2 */
 
 	if (debug_mask & DEBUG_SUSPEND)
 		pr_info("late_resume: call handlers\n");

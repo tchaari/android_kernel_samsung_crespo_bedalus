@@ -45,7 +45,7 @@
 
 #define NAME_SIZE	32
 
-#ifdef CONFIG_S5P_LPAUDIO
+#ifdef CONFIG_S5P_IDLE2
 #include <linux/wakelock.h>
 #endif
 static DEFINE_MUTEX(pcm_mutex);
@@ -1043,7 +1043,7 @@ int snd_soc_suspend(struct device *dev)
 	struct snd_soc_codec *codec;
 	int i;
 
-#ifdef CONFIG_S5P_LPAUDIO
+#ifdef CONFIG_S5P_IDLE2
 	if (has_audio_wake_lock()) {
 		pr_debug("Inside --- %s---Audio Playing no suspend\n",__func__);
 		return 0;
@@ -1268,7 +1268,7 @@ int snd_soc_resume(struct device *dev)
 {
 	struct snd_soc_card *card = dev_get_drvdata(dev);
 	int i, ac97_control = 0;
-#ifdef CONFIG_S5P_LPAUDIO
+#ifdef CONFIG_S5P_IDLE2
 	if (has_audio_wake_lock()) {
 		pr_debug("Inside --- %s---Audio Playing no suspend\n",__func__);
 		return 0;

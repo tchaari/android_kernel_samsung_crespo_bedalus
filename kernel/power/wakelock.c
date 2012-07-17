@@ -559,7 +559,7 @@ static const struct file_operations wakelock_stats_fops = {
 	.release = single_release,
 };
 
-#ifdef CONFIG_S5P_LPAUDIO
+#ifdef CONFIG_S5P_IDLE2
 static int has_wake_lock_internal(const char *name)
 {
 	int ret = 0;
@@ -606,7 +606,7 @@ int has_audio_wake_lock(void)
 	return ret;
 }
 EXPORT_SYMBOL(has_audio_wake_lock);
-#endif /* CONFIG_S5P_LPAUDIO */
+#endif /* CONFIG_S5P_IDLE2 */
 
 static int __init wakelocks_init(void)
 {

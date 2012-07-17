@@ -24,7 +24,7 @@
 #include <mach/regs-irq.h>
 #include <mach/regs-clock.h>
 #include <plat/pm.h>
-#ifdef CONFIG_S5P_LPAUDIO
+#ifdef CONFIG_S5P_IDLE2
 #include <plat/regs-serial.h>
 #include <plat/regs-otg.h>
 #include <asm/hardware/pl330.h>
@@ -38,7 +38,7 @@
 
 #define S5PC110_MAX_STATES	1
 
-static void s5p_enter_idle(void)
+inline static void s5p_enter_idle(void)
 {
 	unsigned long tmp;
 
@@ -55,7 +55,7 @@ static void s5p_enter_idle(void)
 }
 
 /* Actual code that puts the SoC in different idle states */
-static int s5p_enter_idle_normal(struct cpuidle_device *dev,
+inline static int s5p_enter_idle_normal(struct cpuidle_device *dev,
 				struct cpuidle_state *state)
 {
 	struct timeval before, after;
@@ -80,7 +80,7 @@ static struct cpuidle_driver s5p_idle_driver = {
 	.owner =        THIS_MODULE,
 };
 
-#ifdef CONFIG_S5P_LPAUDIO
+#ifdef CONFIG_S5P_IDLE2
 int previous_idle_mode = NORMAL_MODE;
 extern void s5p_idle2(void);
 
@@ -123,16 +123,16 @@ static struct check_device_op chk_dev_op[] = {
 };
 
 /* Check 3D */
-static int check_g3d_op(void)
+inline static bool check_g3d_op(void)
 {
 	unsigned long val;
 
 	val    = __raw_readl(S5P_CLKGATE_IP0);
 
 	if(val & S5P_CLKGATE_IP0_G3D)
-		return 1;
+		return true;
 	else
-		return 0;
+		return false;
 }
 
 #define S3C_HSMMC_PRNSTS	(0x24)
@@ -142,15 +142,15 @@ static int check_g3d_op(void)
 #define S3C_HSMMC_CLOCK_CARD_EN	0x0004
 
 
-/* If SD/MMC interface is working: return = 1 or not 0 */
-static int check_sdmmc_op(unsigned int ch)
+/* If SD/MMC interface is working: return = true or false */
+inline static bool check_sdmmc_op(unsigned int ch)
 {
 	unsigned int reg1, reg2;
 	void __iomem *base_addr;
 
 	if (unlikely(ch > 2)) {
 		printk(KERN_ERR "Invalid ch[%d] for SD/MMC \n", ch);
-		return 0;
+		return false;
 	}
 
 	base_addr = chk_dev_op[ch].base;
@@ -162,22 +162,22 @@ static int check_sdmmc_op(unsigned int ch)
 	if ((reg1 & (S3C_HSMMC_CMD_INHIBIT | S3C_HSMMC_DATA_INHIBIT)) ||
 			(reg2 & (S3C_HSMMC_CLOCK_CARD_EN))) {
 //		printk(KERN_INFO "sdmmc[%d] is working\n", ch);
-		return 1;
+		return true;
 	} else {
-		return 0;
+		return false;
 	}
 }
 
 /* Check all sdmmc controller */
-static int loop_sdmmc_check(void)
+inline static bool loop_sdmmc_check(void)
 {
 	unsigned int iter;
 
 	for (iter = 0; iter < 3; iter++) {
 		if (check_sdmmc_op(iter))
-			return 1;
+			return true;
 	}
-	return 0;
+	return false;
 }
 
 /* Check onenand is working or not */
@@ -186,7 +186,7 @@ static int loop_sdmmc_check(void)
  * ORWB[0] = 	1b : busy
  * 		0b : Not busy
  **/
-static int check_onenand_op(void)
+inline static bool check_onenand_op(void)
 {
 	unsigned int val;
 	void __iomem *base_addr;
@@ -197,90 +197,46 @@ static int check_onenand_op(void)
 
 	if (val & 0x1) {
 //		printk(KERN_INFO "Onenand is working\n");
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
-
-/* Check P/MDMA is working or not */
-static void __iomem *dma_base[3];
-
-static int check_dma_op(void)
+inline static bool check_dma_op(void)
 {
-	int i, j;
-	unsigned int val;
+	unsigned long val;
 
-	for (i = 0 ; i < 3 ; i++) {
-
-		for (j = 0 ; j < 8 ; j++) {
-			val = __raw_readl(dma_base[i] + 0x34);
-			if (val & (1 << j)) {
-//				printk(KERN_INFO "DMA[%d][%d] is working\n", i, j);
-				return 1;
-			}
-		}
+	val = __raw_readl(S5P_CLKGATE_IP0);
+	if (val & (S5P_CLKGATE_IP0_MDMA | S5P_CLKGATE_IP0_PDMA0
+					| S5P_CLKGATE_IP0_PDMA1)) {
+		printk(KERN_INFO "DMAis working\n");
+		return true;
 	}
-
-	return 0;
-}
-
-/* Check USBOTG is woring or not*/
-static int check_usbotg_op(void)
-{
-	unsigned int val;
-
-	val = __raw_readl(S3C_UDC_OTG_GOTGCTL);
-
-	if (val & 0x3) {
-//		printk(KERN_INFO "USBOTG is working\n");
-		return 1;
-	}
-	return 0;
-}
-
-/* Check I2C */
-static int check_i2c_op(void)
-{
-	unsigned int val, ch;
-	void __iomem *base_addr;
-
-	for (ch = 0; ch < 3; ch++) {
-
-		base_addr = chk_dev_op[(4 + ch)].base;
-
-		val = __raw_readl(base_addr + 0x04);
-
-		if (val & (1<<5)) {
-//			printk(KERN_INFO "I2C ch:%d is working\n", ch);
-			return 1;
-		}
-	}
-	return 0;
+	return false;
 }
 
 extern void i2sdma_getpos(dma_addr_t *src);
-static int check_idmapos(void)
+inline static bool check_idmapos(void)
 {
         dma_addr_t src;
         i2sdma_getpos(&src);
         src = src & 0x3FFF;
         src = 0x4000 - src;
         if(src < 0x150){             // 0x150은 PCM data기준으로 약 2ms
-                return 1;
+                return true;
         }
         else
-                return 0;
+                return false;
 }
 extern unsigned int get_rtc_cnt(void);
-static int check_rtcint(void)
+inline static bool check_rtcint(void)
 {
         unsigned int current_cnt = get_rtc_cnt();
         if(current_cnt < 0x40){       // 0x40은 RTC clock인 32768기준으로 2ms임.
-                return 1;
+                return true;
         }
         else
-                return 0;
+                return false;
 }
 
 
@@ -293,7 +249,7 @@ static int check_rtcint(void)
 #define GPIO_PUD_PDN_OFFSET	0x14
 #define GPIO_PUD_OFFSET		0x08
 
-static void s5p_gpio_pdn_conf(void)
+inline static void s5p_gpio_pdn_conf(void)
 {
 	void __iomem *gpio_base = S5PV210_GPA0_BASE;
 	unsigned int val;
@@ -311,7 +267,7 @@ static void s5p_gpio_pdn_conf(void)
 	} while (gpio_base <= S5PV210_MP28_BASE);
 }
 
-static void s5p_enter_idle2(void)
+inline static void s5p_enter_idle2(void)
 {
 	unsigned long tmp;
 	unsigned long save_eint_mask;
@@ -427,34 +383,32 @@ void s5p_set_lpaudio_lock(int flag)
 
 	if (idle2_lock_count < 0)
 		idle2_lock_count = 0;
-	printk(KERN_INFO "idle2: %d lpaudio locks enabled%d\n", idle2_lock_count);
+	printk(KERN_INFO "idle2: %d locks enabled\n", idle2_lock_count);
 
 	spin_unlock(&idle2_lock);
 }
 EXPORT_SYMBOL(s5p_set_lpaudio_lock);
 
-int s5p_get_lpaudio_lock(void)
+inline int s5p_get_lpaudio_lock(void)
 {
 	return idle2_lock_count;
 }
-EXPORT_SYMBOL(s5p_get_lpaudio_lock);
 
-static int s5p_idle_bm_check(void)
+inline static bool s5p_idle_bm_check(void)
 {
 	if (has_audio_wake_lock() && s5p_get_lpaudio_lock() == 0) {
 		if (loop_sdmmc_check() || check_onenand_op()
-			|| check_dma_op() || check_usbotg_op()
-			|| check_i2c_op() || check_g3d_op()
+			|| check_dma_op() || check_g3d_op()
 			|| check_idmapos() || check_rtcint())
-			return 1;
+			return true;
 		else
-			return 0;
+			return false;
 	}
-	return 1;
+	return true;
 }
 
 /* Actual code that puts the SoC in different idle states */
-static int s5p_enter_idle_lpaudio(struct cpuidle_device *dev,
+inline static int s5p_enter_idle_lpaudio(struct cpuidle_device *dev,
 				struct cpuidle_state *state)
 {
 	struct timeval before, after;
@@ -471,7 +425,7 @@ static int s5p_enter_idle_lpaudio(struct cpuidle_device *dev,
 	return idle_time;
 }
 
-static int s5p_enter_idle_bm(struct cpuidle_device *dev,
+inline static int s5p_enter_idle_bm(struct cpuidle_device *dev,
 				struct cpuidle_state *state)
 {
 	if (s5p_idle_bm_check()) {
@@ -503,7 +457,7 @@ int s5p_setup_lpaudio(unsigned int mode)
 		strcpy(device->states[0].name, "IDLE");
 		strcpy(device->states[0].desc, "ARM clock gating - WFI");
 		break;
-	case LPAUDIO_MODE:
+	case IDLE2_MODE:
 		device->state_count = 1;
 		/* Wait for interrupt state */
 		device->states[0].enter = s5p_enter_idle_bm;
@@ -534,17 +488,17 @@ int s5p_setup_lpaudio(unsigned int mode)
 	return ret;
 }
 EXPORT_SYMBOL(s5p_setup_lpaudio);
-#endif /* CONFIG_S5P_LPAUDIO */
+#endif /* CONFIG_S5P_IDLE2 */
 
 /* Initialize CPU idle by registering the idle states */
 static int s5p_init_cpuidle(void)
 {
 	struct cpuidle_device *device;
-#ifdef CONFIG_S5P_LPAUDIO
+#ifdef CONFIG_S5P_IDLE2
 	struct platform_device *pdev;
 	struct resource *res;
 	int i = 0;
-#endif /* CONFIG_S5P_LPAUDIO */
+#endif /* CONFIG_S5P_IDLE2 */
 
 	cpuidle_register_driver(&s5p_idle_driver);
 
@@ -561,14 +515,17 @@ static int s5p_init_cpuidle(void)
 
 	if (cpuidle_register_device(device)) {
 		printk(KERN_ERR "s5p_init_cpuidle: Failed registering\n");
+		BUG();
 		return -EIO;
 	}
-#ifdef CONFIG_S5P_LPAUDIO
+#ifdef CONFIG_S5P_IDLE2
 	regs_save = dma_alloc_coherent(NULL, 4096, &phy_regs_save, GFP_KERNEL);
 	if (regs_save == NULL) {
 		printk(KERN_ERR "DMA alloc error\n");
+		BUG();
 		return -ENOMEM;
 	}
+	printk(KERN_INFO "cpuidle: IDLE2 support enabled - version 0.101 by <willtisdale@gmail.com>\n");
 	printk(KERN_INFO "cpuidle: phy_regs_save:0x%x\n", phy_regs_save);
 
 	spin_lock_init(&idle2_lock);
@@ -597,26 +554,7 @@ static int s5p_init_cpuidle(void)
 			return -EINVAL;
 		}
 	}
-
-	/* M,PDMA0,1 controller memory region allocation */
-	dma_base[0] = ioremap(S5PV210_PA_MDMA, 4096);
-	if (dma_base[0] == NULL) {
-		printk(KERN_ERR "M2M-DMA ioremap failed\n");
-		return -EINVAL;
-	}
-
-	dma_base[1] = ioremap(S5PV210_PA_PDMA0, 4096);
-	if (dma_base[1] == NULL) {
-		printk(KERN_ERR "PDMA0 ioremap failed\n");
-		return -EINVAL;
-	}
-
-	dma_base[2] = ioremap(S5PV210_PA_PDMA1, 4096);
-	if (dma_base[2] == NULL) {
-		printk(KERN_ERR "PDMA1 ioremap failed\n");
-		return -EINVAL;
-	}
-#endif /* CONFIG_S5P_LPAUDIO */
+#endif /* CONFIG_S5P_IDLE2 */
 
 	return 0;
 }

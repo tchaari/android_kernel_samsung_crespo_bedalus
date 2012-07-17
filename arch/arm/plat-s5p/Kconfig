@@ -103,7 +103,7 @@ config S5P_DEV_FB
 	help
 	  Compile in platform device definitions for FIMD controller
 
-config S5P_LPAUDIO
+config S5P_IDLE2
 	bool "Support S5P Low Power(LP) Audio"
 	depends on CPU_IDLE && PM && !S5PV210_CORESIGHT
 	default y

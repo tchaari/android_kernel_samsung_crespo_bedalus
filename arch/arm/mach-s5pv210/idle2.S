@@ -12,91 +12,15 @@
  *
  */
 #include <linux/linkage.h>
-#include <linux/init.h>
 #include <asm/assembler.h>
-#include <mach/regs-clock.h>
-#include <mach/map.h>
-#include <asm/asm-offsets.h>
 #include <asm/memory.h>
 
 
-
-#define NO_L2_CLEAN
-/*
- *	v7_flush_l1_dcache()
- *
- *	Flush the L1 D-cache.
- *
- *
- */
-ENTRY(v7_flush_l1_dcache)
-	dmb					@ ensure ordering with previous memory accesses
-	mrc	p15, 1, r0, c0, c0, 1		@ read clidr
-	ands	r3, r0, #0x7000000		@ extract loc from clidr
-	mov	r3, r3, lsr #23			@ left align loc bit field
-	beq	finished			@ if loc is 0, then no need to clean
-	mov	r10, #0				@ start clean at cache level 0
-loop1:
-	add	r2, r10, r10, lsr #1		@ work out 3x current cache level
-	mov	r1, r0, lsr r2			@ extract cache type bits from clidr
-	and	r1, r1, #7			@ mask of the bits for current cache only
-	cmp	r1, #2				@ see what cache we have at this level
-	blt	skip				@ skip if no cache, or just i-cache
-	mcr	p15, 2, r10, c0, c0, 0		@ select current cache level in cssr
-	isb					@ isb to sych the new cssr&csidr
-	mrc	p15, 1, r1, c0, c0, 0		@ read the new csidr
-	and	r2, r1, #7			@ extract the length of the cache lines
-	add	r2, r2, #4			@ add 4 (line length offset)
-	ldr	r4, =0x3ff
-	ands	r4, r4, r1, lsr #3		@ find maximum number on the way size
-	clz	r5, r4				@ find bit position of way size increment
-	ldr	r7, =0x7fff
-	ands	r7, r7, r1, lsr #13		@ extract max number of the index size
-loop2:
-	mov	r9, r4				@ create working copy of max way size
-loop3:
-	orr	r11, r10, r9, lsl r5		@ factor way and cache number into r11
-	orr	r11, r11, r7, lsl r2		@ factor index number into r11
-	mcr	p15, 0, r11, c7, c14, 2		@ clean & invalidate by set/way
-@	mcr	p15, 0, r11, c7, c10, 2		@ clean by set/way
-	subs	r9, r9, #1			@ decrement the way
-	bge	loop3
-	subs	r7, r7, #1			@ decrement the index
-	bge	loop2
-skip:
-#if !defined(NO_L2_CLEAN)
-	add	r10, r10, #2			@ increment cache number
-	cmp	r3, r10
-	bgt	loop1
-#endif
-finished:
-	mov	r10, #0				@ swith back to cache level 0
-	mcr	p15, 2, r10, c0, c0, 0		@ select current cache level in cssr
-	dsb
-	isb
-	mov	pc, lr
-ENDPROC(v7_flush_l1_dcache)
-
-ENTRY(v7_flush_cache_for_idle2)
-	stmfd	sp!, {r4-r5, r7, r9-r11, lr}
-	bl	v7_flush_l1_dcache
-	mov	r0, #0
-	mcr	p15, 0, r0, c7, c5, 0		@ I+BTB cache invalidate
-	ldmfd	sp!, {r4-r5, r7, r9-r11, lr}
-	mov	pc, lr
-ENDPROC(v7_flush_cache_for_idle2)
-
 ENTRY(s5p_idle2)
-	stmfd	sp!, {r4-r5, r7, r9-r11, lr}
+	bl	v7_flush_kern_cache_all
 
-	bl	v7_flush_cache_for_idle2
-
-	ldmfd	sp!, {r4-r5, r7, r9-r11, lr}
 	dmb
-	dsb
-	wfi
-
-	b	.
+	bl	cpu_v7_do_idle
 
 	.text
 
@@ -121,23 +45,6 @@ ENTRY(s5p_idle2_save)
 	mrc	p15, 0, r12, c10, c2, 0	@ Read PRRR
 	mrc	p15, 0, r3, c10, c2, 1	@ READ NMRR
 
-	ldr	r2, =S5P_INFORM1
-	ldr	r1, [r2]
-	cmp	r1, #0x0
-	bne	idle2_save
-
-	stmia	r0, { r3 - r13 }
-
-	@@ write our state back to RAM
-	bl	v7_flush_cache_for_idle2
-
-	@@ jump to final code to send system to sleep
-	ldr	r0, =pm_cpu_sleep
-	@@ldr	pc, [ r0 ]
-	ldr	r0, [ r0 ]
-	mov	pc, r0
-
-idle2_save:
 	/* Save CP15 registers */
 	stmia	r0!, { r3 - r12}
 
@@ -188,17 +95,9 @@ idle2_save:
 	@@ turned on, this restores the last bits from the
 	@@ stack
 resume_idle2_with_mmu:
-#if defined(NO_L2_CLEAN)
-	ldr	r0, =S5P_INFORM1
-	ldr	r1, [r0]
-	cmp	r1, #0x0
-	beq	skip_idle2_l2_enable
-
 	mrc     p15, 0, r0, c1, c0, 1	@enable L2 cache
 	orr     r0, r0, #(1<<1)
 	mcr     p15, 0, r0, c1, c0, 1
-#endif
-skip_idle2_l2_enable:
 	mov	r0, #1
 
 	/* delete added mmu table list */
@@ -219,7 +118,7 @@ skip_idle2_l2_enable:
 
 	.word	0x2bedf00d
 
-	/* s3c_cpu_resume
+	/* s5p_idle2_resume
 	 *
 	 * resume code entry for bootloader to call
 	 *
@@ -241,19 +140,10 @@ ENTRY(s5p_idle2_resume)
 
 	ldr	r1, =0xe010f008 	@ Read INFORM2 register
 	ldr	r0, [r1]		@ Load phy_regs_save value
-	ldr	r1, =0xe010f004		@ Read INFORM1 register
-	ldr	r1, [r1]
-	cmp 	r1, #0x0
-	bne	idle2_restore_1
 
-	ldmia	r0, { r3 - r13 }
-	b	common_idle2_restore_1
-
-idle2_restore_1:
 	/* Restore CP15 registers */
 	ldmia	r0!, { r3 - r12 }
 
-common_idle2_restore_1:
 	mcr	p15, 0, r4, c13, c0, 0	@ FCSE/PID
 	mcr	p15, 0, r5, c3, c0, 0	@ Domain ID
 
@@ -261,11 +151,10 @@ common_idle2_restore_1:
 	mcr	p15, 0, r7, c2, c0, 1	@ Translation Table BASE1
 	mcr	p15, 0, r6, c2, c0, 0	@ Translation Table BASE0
 
-#if defined(NO_L2_CLEAN)
 	cmp	r1, #0x0		@ if idle2 wakeup
 	bicne	r10, r10, #(1<<1)	@ disable L2cache
 	mcr	p15, 0, r10, c1, c0, 1	@ Auxiliary control register
-#endif
+
 	mov	r1, #0
 	mcr	p15, 0, r1, c8, c7, 0	@ Invalidate I & D TLB
 
@@ -275,11 +164,6 @@ common_idle2_restore_1:
 
 	mcr	p15, 0, r12, c10, c2, 0	@ write PRRR
 	mcr	p15, 0, r3, c10, c2, 1	@ write NMRR
-
-	ldr	r1, =0xe010f004		@ Read INFORM1 register
-	ldr	r1, [r1]
-	cmp 	r1, #0x0
-	beq	common_idle2_restore_2
 
 	/* Restore SVC status register */
 	ldr	r2, [r0], #4
@@ -325,7 +209,6 @@ common_idle2_restore_1:
 	/* Restore SVC mode stack pointer register (R13) */
 	ldr	r13, [r0]
 
-common_idle2_restore_2:
 	/* calculate first section address into r8 */
 	mov	r4, r6
 	ldr	r5, =0x3fff

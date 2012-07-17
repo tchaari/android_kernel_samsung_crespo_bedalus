@@ -567,19 +567,22 @@ static inline bool has_wake_lock_internal(const char *name)
 
 	spin_lock_irqsave(&list_lock, irqflags);
 	list_for_each_entry_safe(lock, n, &active_wake_locks[WAKE_LOCK_SUSPEND], link) {
-#ifdef CONFIG_S5P_IDLE2_DEBUG
-		printk(KERN_INFO "%s: %s wakelock active\n", __func__, lock->name);
-#endif
 		if (lock->flags & WAKE_LOCK_AUTO_EXPIRE) {
 			long timeout = lock->expires - jiffies;
 			if (timeout > 0) {
 				if (strcmp(lock->name, name) == 0) {
+#ifdef CONFIG_S5P_IDLE2_DEBUG
+					printk(KERN_INFO "%s: %s WAKE_LOCK_AUTO_EXPIRE\n", __func__, lock->name);
+#endif
 					spin_unlock_irqrestore(&list_lock, irqflags);
 					return true;
 				}
 			}
 		} else {
 			if (strcmp(lock->name, name) == 0) {
+#ifdef CONFIG_S5P_IDLE2_DEBUG
+				printk(KERN_INFO "%s: %s\n", __func__, lock->name);
+#endif
 				spin_unlock_irqrestore(&list_lock, irqflags);
 				return true;
 			}

@@ -291,8 +291,6 @@ inline static void s5p_enter_idle2(void)
 	/* store the physical address of the register recovery block */
 	__raw_writel(phy_regs_save, S5P_INFORM2);
 
-	__raw_writel(IDLE2_MODE, S5P_INFORM1);
-
 	/* ensure at least INFORM0 has the resume address */
 	__raw_writel(virt_to_phys(s5p_idle2_resume), S5P_INFORM0);
 
@@ -414,7 +412,7 @@ inline int s5p_get_idle2_lock(void)
 
 inline static bool s5p_idle_bm_check(void)
 {
-	if (likely(has_audio_wake_lock() && s5p_get_idle2_lock() == 0)) {
+	if (unlikely(has_audio_wake_lock() && (s5p_get_idle2_lock() == 0))) {
 		if (unlikely(loop_sdmmc_check() || check_onenand_op()
 			|| check_dma_op() || check_g3d_op()
 			|| check_idmapos() || check_rtcint()))
@@ -446,9 +444,9 @@ inline static int s5p_enter_idle_idle2(struct cpuidle_device *dev,
 inline static int s5p_enter_idle_bm(struct cpuidle_device *dev,
 				struct cpuidle_state *state)
 {
-	if (unlikely(s5p_idle_bm_check())) {
+	if (likely(s5p_idle_bm_check())) {
 #ifdef CONFIG_S5P_IDLE2_DEBUG
-		printk("%s: s5p_idle_bm_check() true - Entering normal IDLE\n", __func__);
+		printk("%s: s5p_idle_bm_check() returned true - Entering normal IDLE\n", __func__);
 #endif
 		return s5p_enter_idle_normal(dev, state);
 	}
@@ -545,7 +543,7 @@ static int s5p_init_cpuidle(void)
 		BUG();
 		return -ENOMEM;
 	}
-	printk(KERN_INFO "cpuidle: IDLE2 support enabled - version 0.110 by <willtisdale@gmail.com>\n");
+	printk(KERN_INFO "cpuidle: IDLE2 support enabled - version 0.120 by <willtisdale@gmail.com>\n");
 	printk(KERN_INFO "cpuidle: phy_regs_save:0x%x\n", phy_regs_save);
 
 	spin_lock_init(&idle2_lock);

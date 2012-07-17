@@ -1,6 +1,8 @@
 /* kernel/power/wakelock.c
  *
  * Copyright (C) 2005-2008 Google, Inc.
+ * Copyright (c) 2010 Samsung Electronics
+ * Copyright (c) 2012 Will Tisdale - <willtisdale@gmail.com>
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -600,8 +602,9 @@ bool has_audio_wake_lock(void)
 	 */
 	if (has_wake_lock_internal("PowerManagerService") && !has_wake_lock_internal("vbus_present"))
 		return true;
+
 #ifdef CONFIG_S5P_IDLE2_DEBUG
-	printk(KERN_INFO "%s: returns false\n", __func__);
+	printk(KERN_INFO "%s: returning false\n", __func__);
 #endif
 	return false;
 }

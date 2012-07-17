@@ -15,7 +15,7 @@
 
 extern int previous_idle_mode;
 extern int idle2_lock_count;
-extern int s5p_setup_lpaudio(unsigned int mode);
-extern void s5p_set_lpaudio_lock(int flag);
+extern int s5p_setup_idle2(unsigned int mode);
+extern void s5p_set_idle2_lock(int flag);
 extern int s5p_idle2_save(unsigned long *saveblk);
 extern void s5p_idle2_resume(void);

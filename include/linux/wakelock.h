@@ -73,7 +73,7 @@ int wake_lock_active(struct wake_lock *lock);
  */
 long has_wake_lock(int type);
 #ifdef CONFIG_S5P_IDLE2
-int has_audio_wake_lock(void);
+bool has_audio_wake_lock(void);
 #endif /* CONFIG_S5P_IDLE2 */
 
 #else

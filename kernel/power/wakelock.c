@@ -560,50 +560,47 @@ static const struct file_operations wakelock_stats_fops = {
 };
 
 #ifdef CONFIG_S5P_IDLE2
-static int has_wake_lock_internal(const char *name)
+static inline bool has_wake_lock_internal(const char *name)
 {
-	int ret = 0;
 	unsigned long irqflags;
 	struct wake_lock *lock, *n;
 
 	spin_lock_irqsave(&list_lock, irqflags);
 	list_for_each_entry_safe(lock, n, &active_wake_locks[WAKE_LOCK_SUSPEND], link) {
+#ifdef CONFIG_S5P_IDLE2_DEBUG
+		printk(KERN_INFO "%s: %s wakelock active\n", __func__, lock->name);
+#endif
 		if (lock->flags & WAKE_LOCK_AUTO_EXPIRE) {
 			long timeout = lock->expires - jiffies;
 			if (timeout > 0) {
 				if (strcmp(lock->name, name) == 0) {
-					ret = 1;
 					spin_unlock_irqrestore(&list_lock, irqflags);
-					return ret;
+					return true;
 				}
 			}
 		} else {
 			if (strcmp(lock->name, name) == 0) {
-				ret = 1;
 				spin_unlock_irqrestore(&list_lock, irqflags);
-				return ret;
+				return true;
 			}
 		}
 	}
 	spin_unlock_irqrestore(&list_lock, irqflags);
-	return ret;
+	return false;
 }
 
-int has_audio_wake_lock(void)
+bool has_audio_wake_lock(void)
 {
-	int ret = 0;
-
-//	printk("wake_lock: PowerManagerService:%d, vbus_present:%d\n", has_wake_lock_internal("PowerManagerService"), has_wake_lock_internal("vbus_present"));
 	/*
-	 * We use the PowerManagerService wakelock because AudioOut_1 is now a partial wakelock, which is held as
-	 * PowerManagerService. Not ideal, but better than nothing.
+	 * We use the PowerManagerService wakelock because AudioOut_1 is a partial wakelock, which is held by
+	 * PowerManagerService. Not perfect, but the best compromise.
 	 */
 	if (has_wake_lock_internal("PowerManagerService") && !has_wake_lock_internal("vbus_present"))
-	{
-		ret = 1;
-		return ret;
-	}
-	return ret;
+		return true;
+#ifdef CONFIG_S5P_IDLE2_DEBUG
+	printk(KERN_INFO "%s: returns false\n", __func__);
+#endif
+	return false;
 }
 EXPORT_SYMBOL(has_audio_wake_lock);
 #endif /* CONFIG_S5P_IDLE2 */

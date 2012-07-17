@@ -1,7 +1,7 @@
 /* arch/arm/mach-s5pv210/include/mach/cpuidle.h
  *
- * Copyright 2010 Samsung Electronics
- *	Jaecheol Lee <jc.lee@samsung>
+ * Copyright (c) 2010 Samsung Electronics - Jaecheol Lee <jc.lee@samsung>
+ * Copyright (c) 2012 Will Tisdale - <willtisdale@gmail.com>
  *
  * S5PV210 - CPUIDLE support
  *

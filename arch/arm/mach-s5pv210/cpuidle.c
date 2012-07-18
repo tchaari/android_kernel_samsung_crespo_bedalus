@@ -81,7 +81,7 @@ static struct cpuidle_driver s5p_idle_driver = {
 };
 
 #ifdef CONFIG_S5P_IDLE2
-int previous_idle_mode = NORMAL_MODE;
+bool previous_idle_mode = NORMAL_MODE;
 extern void s5p_idle2(void);
 
 /* For saving & restoring VIC register before entering
@@ -116,9 +116,6 @@ static struct check_device_op chk_dev_op[] = {
 	{.base = 0, .pdev = &s3c_device_hsmmc3},
 #endif
 	{.base = 0, .pdev = &s5p_device_onenand},
-	{.base = 0, .pdev = &s3c_device_i2c0},
-	{.base = 0, .pdev = &s3c_device_i2c1},
-	{.base = 0, .pdev = &s3c_device_i2c2},
 	{.base = 0, .pdev = NULL},
 };
 
@@ -341,7 +338,7 @@ inline static void s5p_enter_idle2(void)
 
 	/* To check VIC Status register before enter idle2 mode */
 	if (__raw_readl(S5P_VIC2REG(VIC_RAW_STATUS)) & 0x10000) {
-		printk(KERN_WARNING "%s: Skipping IDLE2\n", __func__);
+		printk(KERN_WARNING "%s: VIC interrupt active, bailing!\n", __func__);
 		goto skipped_idle2;
 	}
 
@@ -454,11 +451,9 @@ inline static int s5p_enter_idle_bm(struct cpuidle_device *dev,
 		return s5p_enter_idle_idle2(dev, state);
 }
 
-int s5p_setup_idle2(unsigned int mode)
+void s5p_setup_idle2(bool mode)
 {
 	struct cpuidle_device *device;
-
-	int ret = 0;
 
 	cpuidle_pause_and_lock();
 	device = &per_cpu(s5p_cpuidle_device, smp_processor_id());
@@ -502,8 +497,6 @@ int s5p_setup_idle2(unsigned int mode)
 	}
 	cpuidle_enable_device(device);
 	cpuidle_resume_and_unlock();
-
-	return ret;
 }
 EXPORT_SYMBOL(s5p_setup_idle2);
 #endif /* CONFIG_S5P_IDLE2 */
@@ -543,7 +536,7 @@ static int s5p_init_cpuidle(void)
 		BUG();
 		return -ENOMEM;
 	}
-	printk(KERN_INFO "cpuidle: IDLE2 support enabled - version 0.121 by <willtisdale@gmail.com>\n");
+	printk(KERN_INFO "cpuidle: IDLE2 support enabled - version 0.122 by <willtisdale@gmail.com>\n");
 	printk(KERN_INFO "cpuidle: phy_regs_save:0x%x\n", phy_regs_save);
 
 	spin_lock_init(&idle2_lock);

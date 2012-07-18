@@ -10,12 +10,12 @@
  * published by the Free Software Foundation.
 */
 
-#define NORMAL_MODE	0
-#define IDLE2_MODE	1
+#define NORMAL_MODE	false
+#define IDLE2_MODE	true
 
-extern int previous_idle_mode;
+extern bool previous_idle_mode;
 extern int idle2_lock_count;
-extern int s5p_setup_idle2(unsigned int mode);
+extern void s5p_setup_idle2(bool mode);
 extern void s5p_set_idle2_lock(int flag);
 extern int s5p_idle2_save(unsigned long *saveblk);
 extern void s5p_idle2_resume(void);

@@ -34,10 +34,6 @@
 
 #include <mach/dma.h>
 
-#include <mach/regs-gpio.h>
-#include <mach/gpio.h>
-#include <mach/gpio-herring.h>
-
 #define S5PC110_MAX_STATES	1
 
 inline static void s5p_enter_idle(void)
@@ -240,6 +236,7 @@ inline static bool check_idmapos(void)
 	else
 		return false;
 }
+
 extern unsigned int get_rtc_cnt(void);
 inline static bool check_rtcint(void)
 {
@@ -252,34 +249,6 @@ inline static bool check_rtcint(void)
 	}
 	else
 		return false;
-}
-
-
-/* Before entering, idle2 mode GPIO Powe Down Mode
- * Configuration register has to be set with same state
- * in Normal Mode
- **/
-#define GPIO_OFFSET		0x20
-#define GPIO_CON_PDN_OFFSET	0x10
-#define GPIO_PUD_PDN_OFFSET	0x14
-#define GPIO_PUD_OFFSET		0x08
-
-inline static void s5p_gpio_pdn_conf(void)
-{
-	void __iomem *gpio_base = S5PV210_GPA0_BASE;
-	unsigned int val;
-
-	do {
-		/* Keep the previous state in idle2 mode */
-		__raw_writel(0xffff, gpio_base + GPIO_CON_PDN_OFFSET);
-
-		/* Pull up-down state in idle2 is same as normal */
-		val = __raw_readl(gpio_base + GPIO_PUD_OFFSET);
-		__raw_writel(val, gpio_base + GPIO_PUD_PDN_OFFSET);
-
-		gpio_base += GPIO_OFFSET;
-
-	} while (gpio_base <= S5PV210_MP28_BASE);
 }
 
 inline static void s5p_enter_idle2(void)
@@ -305,8 +274,6 @@ inline static void s5p_enter_idle2(void)
 	__raw_writel(0xffffffff, S5P_VIC2REG(VIC_INT_ENABLE_CLEAR));
 	__raw_writel(0xffffffff, S5P_VIC3REG(VIC_INT_ENABLE_CLEAR));
 
-	/* GPIO Power Down Control */
-	s5p_gpio_pdn_conf();
         save_eint_mask = __raw_readl(S5P_EINT_WAKEUP_MASK);
         __raw_writel(0xFFFFFFFF, S5P_EINT_WAKEUP_MASK);
 
@@ -323,24 +290,16 @@ inline static void s5p_enter_idle2(void)
 	tmp = __raw_readl(S5P_WAKEUP_STAT);
 	__raw_writel(tmp, S5P_WAKEUP_STAT);
 
-	/* IDLE config register set */
-	/* TOP Memory retention off */
-	/* TOP Memory LP mode       */
-	/* ARM_L2_Cacheret on       */
+	/*
+	 * Configure for DEEP-IDLE TOP ON mode
+	 * IDLE config register set
+	 * TOP Memory retention on
+	 * TOP Memory LP mode off
+	 * ARM_L2_Cacheret on
+	 */
 	tmp = __raw_readl(S5P_IDLE_CFG);
 	tmp &= ~(0x3f << 26);
-	/*
-	 * TOP ON if bluetooth wake GPIO is active.
-	 * Not the prettiest method but it seems to be
-	 * the cheapest way, rather than creating new functions
-	 * or using the more expensive wakelock check.
-	 * Bluetooth requires TOP ON to stream audio,
-	 * TOP OFF kills the audio stream.
-	 */
-	if (unlikely(gpio_get_value(GPIO_BT_HOST_WAKE)))
-		tmp |= ((2<<30) | (2<<28) | (1<<26) | (1<<0));
-	else
-		tmp |= ((1<<30) | (1<<28) | (1<<26) | (1<<0));
+	tmp |= ((2<<30) | (2<<28) | (1<<26) | (1<<0));
 	__raw_writel(tmp, S5P_IDLE_CFG);
 
 	/* Power mode Config setting */
@@ -380,11 +339,6 @@ skipped_idle2:
 	tmp = __raw_readl(S5P_PWR_CFG);
 	tmp &= S5P_CFG_WFI_CLEAN;
 	__raw_writel(tmp, S5P_PWR_CFG);
-
-	/* Release retention GPIO/MMC/UART IO */
-	tmp = __raw_readl(S5P_OTHERS);
-	tmp |= ((1<<31) | (1<<30) | (1<<29) | (1<<28));
-	__raw_writel(tmp, S5P_OTHERS);
 
 	__raw_writel(vic_regs[0], S5P_VIC0REG(VIC_INT_ENABLE));
 	__raw_writel(vic_regs[1], S5P_VIC1REG(VIC_INT_ENABLE));
@@ -487,7 +441,7 @@ void s5p_setup_idle2(bool mode)
 		device->state_count = 1;
 		/* Wait for interrupt state */
 		device->states[0].enter = s5p_enter_idle_bm;
-		device->states[0].exit_latency = 300;	/* uS */
+		device->states[0].exit_latency = 1;	/* uS */
 		device->states[0].target_residency = 5000;
 		device->states[0].flags = CPUIDLE_FLAG_TIME_VALID |
 						CPUIDLE_FLAG_CHECK_BM;
@@ -549,7 +503,7 @@ static int s5p_init_cpuidle(void)
 		BUG();
 		return -ENOMEM;
 	}
-	printk(KERN_INFO "cpuidle: IDLE2 support enabled - version 0.130 by <willtisdale@gmail.com>\n");
+	printk(KERN_INFO "cpuidle: IDLE2 support enabled - version 0.140 by <willtisdale@gmail.com>\n");
 	printk(KERN_INFO "cpuidle: phy_regs_save:0x%x\n", phy_regs_save);
 
 	spin_lock_init(&idle2_lock);

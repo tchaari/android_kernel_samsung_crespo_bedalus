@@ -376,7 +376,7 @@ inline int s5p_get_idle2_lock(void)
 
 inline static bool s5p_idle_bm_check(void)
 {
-	if (likely(has_audio_wake_lock() && (s5p_get_idle2_lock() == 0))) {
+	if (likely(s5p_get_idle2_lock() == 0)) {
 		if (unlikely(loop_sdmmc_check() || check_onenand_op()
 			|| check_dma_op() || check_g3d_op()
 			|| check_idmapos() || check_rtcint()))

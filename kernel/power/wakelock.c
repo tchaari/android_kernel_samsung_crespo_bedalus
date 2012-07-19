@@ -561,56 +561,6 @@ static const struct file_operations wakelock_stats_fops = {
 	.release = single_release,
 };
 
-#ifdef CONFIG_S5P_IDLE2
-static inline bool has_wake_lock_internal(const char *name)
-{
-	unsigned long irqflags;
-	struct wake_lock *lock, *n;
-
-	spin_lock_irqsave(&list_lock, irqflags);
-	list_for_each_entry_safe(lock, n, &active_wake_locks[WAKE_LOCK_SUSPEND], link) {
-		if (lock->flags & WAKE_LOCK_AUTO_EXPIRE) {
-			long timeout = lock->expires - jiffies;
-			if (timeout > 0) {
-				if (strcmp(lock->name, name) == 0) {
-#ifdef CONFIG_S5P_IDLE2_DEBUG
-					printk(KERN_INFO "%s: %s WAKE_LOCK_AUTO_EXPIRE\n", __func__, lock->name);
-#endif
-					spin_unlock_irqrestore(&list_lock, irqflags);
-					return true;
-				}
-			}
-		} else {
-			if (strcmp(lock->name, name) == 0) {
-#ifdef CONFIG_S5P_IDLE2_DEBUG
-				printk(KERN_INFO "%s: %s\n", __func__, lock->name);
-#endif
-				spin_unlock_irqrestore(&list_lock, irqflags);
-				return true;
-			}
-		}
-	}
-	spin_unlock_irqrestore(&list_lock, irqflags);
-	return false;
-}
-
-bool has_audio_wake_lock(void)
-{
-	/*
-	 * We use the PowerManagerService wakelock because AudioOut_1 is a partial wakelock, which is held by
-	 * PowerManagerService. Not perfect, but the best compromise.
-	 */
-	if (has_wake_lock_internal("PowerManagerService") && !has_wake_lock_internal("vbus_present"))
-		return true;
-
-#ifdef CONFIG_S5P_IDLE2_DEBUG
-	printk(KERN_INFO "%s: returning false\n", __func__);
-#endif
-	return false;
-}
-EXPORT_SYMBOL(has_audio_wake_lock);
-#endif /* CONFIG_S5P_IDLE2 */
-
 static int __init wakelocks_init(void)
 {
 	int ret;

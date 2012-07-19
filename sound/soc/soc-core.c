@@ -1043,12 +1043,6 @@ int snd_soc_suspend(struct device *dev)
 	struct snd_soc_codec *codec;
 	int i;
 
-#ifdef CONFIG_S5P_IDLE2
-	if (has_audio_wake_lock()) {
-		pr_debug("Inside --- %s---Audio Playing no suspend\n",__func__);
-		return 0;
-	}
-#endif
 	/* If the initialization of this soc device failed, there is no codec
 	 * associated with it. Just bail out in this case.
 	 */
@@ -1268,12 +1262,7 @@ int snd_soc_resume(struct device *dev)
 {
 	struct snd_soc_card *card = dev_get_drvdata(dev);
 	int i, ac97_control = 0;
-#ifdef CONFIG_S5P_IDLE2
-	if (has_audio_wake_lock()) {
-		pr_debug("Inside --- %s---Audio Playing no suspend\n",__func__);
-		return 0;
-	}
-#endif
+
 	/* AC97 devices might have other drivers hanging off them so
 	 * need to resume immediately.  Other drivers don't have that
 	 * problem and may take a substantial amount of time to resume

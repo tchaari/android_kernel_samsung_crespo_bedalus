@@ -23,10 +23,6 @@
 #include <linux/wakelock.h>
 #include <linux/workqueue.h>
 
-#ifdef CONFIG_S5P_IDLE2
-#include <mach/cpuidle.h>
-#endif /* CONFIG_S5P_IDLE2 */
-
 #include "power.h"
 
 enum {
@@ -113,13 +109,6 @@ static void early_suspend(struct work_struct *work)
 		pr_info("early_suspend: sync\n");
 
 	sys_sync();
-#ifdef CONFIG_S5P_IDLE2
-	if (previous_idle_mode == NORMAL_MODE) {
-		printk("%s: Screen off, enabling IDLE2 mode\n", __func__);
-		s5p_setup_idle2(IDLE2_MODE);
-		previous_idle_mode = IDLE2_MODE;
-	}
-#endif /* CONFIG_S5P_IDLE2 */
 abort:
 	spin_lock_irqsave(&state_lock, irqflags);
 	if (state == SUSPEND_REQUESTED_AND_SUSPENDED)
@@ -146,14 +135,6 @@ static void late_resume(struct work_struct *work)
 			pr_info("late_resume: abort, state %d\n", state);
 		goto abort;
 	}
-
-#ifdef CONFIG_S5P_IDLE2
-	if (previous_idle_mode == IDLE2_MODE) {
-		printk("%s: Screen on, disabling IDLE2 mode\n", __func__);
-		s5p_setup_idle2(NORMAL_MODE);
-		previous_idle_mode = NORMAL_MODE;
-	}
-#endif /* CONFIG_S5P_IDLE2 */
 
 	if (debug_mask & DEBUG_SUSPEND)
 		pr_info("late_resume: call handlers\n");

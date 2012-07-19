@@ -35,6 +35,8 @@
 #include <mach/dma.h>
 
 #include <mach/regs-gpio.h>
+#include <mach/gpio.h>
+#include <mach/gpio-herring.h>
 
 #define S5PC110_MAX_STATES	1
 
@@ -327,7 +329,18 @@ inline static void s5p_enter_idle2(void)
 	/* ARM_L2_Cacheret on       */
 	tmp = __raw_readl(S5P_IDLE_CFG);
 	tmp &= ~(0x3f << 26);
-	tmp |= ((1<<30) | (1<<28) | (1<<26) | (1<<0));
+	/*
+	 * TOP ON if bluetooth wake GPIO is active.
+	 * Not the prettiest method but it seems to be
+	 * the cheapest way, rather than creating new functions
+	 * or using the more expensive wakelock check.
+	 * Bluetooth requires TOP ON to stream audio,
+	 * TOP OFF kills the audio stream.
+	 */
+	if (unlikely(gpio_get_value(GPIO_BT_HOST_WAKE)))
+		tmp |= ((2<<30) | (2<<28) | (1<<26) | (1<<0));
+	else
+		tmp |= ((1<<30) | (1<<28) | (1<<26) | (1<<0));
 	__raw_writel(tmp, S5P_IDLE_CFG);
 
 	/* Power mode Config setting */
@@ -382,21 +395,21 @@ skipped_idle2:
 static spinlock_t idle2_lock;
 int idle2_lock_count = 0;
 /*
- * flag = 0 : allow to enter idle2
- * flag = 1 : don't allow to enter idle2
+ * flag = false : allow to enter idle2
+ * flag = true : don't allow to enter idle2
  */
-void s5p_set_idle2_lock(int flag)
+void s5p_set_idle2_lock(bool flag)
 {
 	spin_lock(&idle2_lock);
 
-	if (flag == 1)
+	if (flag)
 		idle2_lock_count++;
 	else
 		idle2_lock_count--;
 
 	if (idle2_lock_count < 0)
 		idle2_lock_count = 0;
-	printk(KERN_INFO "idle2: %d locks enabled\n", idle2_lock_count);
+	printk(KERN_INFO "%s: %d locks enabled\n", __func__, idle2_lock_count);
 
 	spin_unlock(&idle2_lock);
 }
@@ -536,7 +549,7 @@ static int s5p_init_cpuidle(void)
 		BUG();
 		return -ENOMEM;
 	}
-	printk(KERN_INFO "cpuidle: IDLE2 support enabled - version 0.122 by <willtisdale@gmail.com>\n");
+	printk(KERN_INFO "cpuidle: IDLE2 support enabled - version 0.130 by <willtisdale@gmail.com>\n");
 	printk(KERN_INFO "cpuidle: phy_regs_save:0x%x\n", phy_regs_save);
 
 	spin_lock_init(&idle2_lock);

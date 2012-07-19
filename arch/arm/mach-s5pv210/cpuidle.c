@@ -346,10 +346,12 @@ skipped_idle2:
 }
 
 static spinlock_t idle2_lock;
-int idle2_lock_count = 0;
+int idle2_lock_count = 1;
 /*
  * flag = false : allow to enter idle2
  * flag = true : don't allow to enter idle2
+ * Start with 1 lock, because early suspend will remove that
+ * the first time it is invoked
  */
 void s5p_set_idle2_lock(bool flag)
 {

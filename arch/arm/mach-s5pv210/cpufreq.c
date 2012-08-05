@@ -215,21 +215,6 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	if (relation & ENABLE_FURTHER_CPUFREQ)
 		no_cpufreq_access = false;
 
-#ifdef CONFIG_CPU_DIDLE
-    // Ensures no application decreases the min freq when deepidle enabled at
-    // suspend mement
-	if ((deepidle_is_enabled()) && (uIsSuspended == 1)) 
-	{
-		printk("* * * DAVE: In mach-s5pv-cpufreq.c *");
-		if (policy->max != 400000)
-		{
-			policy->user_policy.max = 400000;
-			policy->max = 400000;
-			printk("* * * Policy max forced to 400MHz"); 
-		}
-	}
-#endif
-
 	if (no_cpufreq_access) {
 #ifdef CONFIG_PM_VERBOSE
 		pr_err("%s:%d denied access to %s as it is disabled"

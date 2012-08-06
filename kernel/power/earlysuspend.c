@@ -1,6 +1,8 @@
 /* kernel/power/earlysuspend.c
  *
  * Copyright (C) 2005-2008 Google, Inc.
+ * Copyright (c) 2010 Samsung Electronics
+ * Copyright (c) 2012 Will Tisdale - <willtisdale@gmail.com>
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -18,7 +20,7 @@
 #include <linux/cpufreq.h>
 #include <linux/interrupt.h>
 #include <linux/deep_idle.h>
-#include <mach/cpuidle.h>
+
 #include <linux/earlysuspend.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
@@ -88,29 +90,28 @@ static void early_suspend(struct work_struct *work)
 	unsigned long irqflags;
 	int abort = 0;
 
+	//dave
+	if ((state == SUSPEND_REQUESTED) && (deepidle_is_enabled()))
+	{
+		preempt_enable();
+		local_irq_enable();
+		ret = cpufreq_driver_target(cpufreq_cpu_get(0), 400000,
+				DISABLE_FURTHER_CPUFREQ);
+		if (ret < 0)
+			printk(KERN_WARNING "%s: Error %d locking CPUfreq\n", __func__, ret);
+		else
+			printk(KERN_INFO "%s: CPUfreq locked to 400MHz\n", __func__);
+		local_irq_disable();
+		preempt_disable();
+	}
+	//dave: method copied from thalamus
+
+
 	mutex_lock(&early_suspend_lock);
 	spin_lock_irqsave(&state_lock, irqflags);
 	if (state == SUSPEND_REQUESTED) {
 		state |= SUSPENDED;
-
-		//dave
-		if (deepidle_is_enabled()) 
-		{
-			preempt_enable();
-			local_irq_enable();
-			ret = cpufreq_driver_target(cpufreq_cpu_get(0), 400000,
-					DISABLE_FURTHER_CPUFREQ);
-			if (ret < 0)
-				printk(KERN_WARNING "%s: Error %d locking CPUfreq\n", __func__, ret);
-			else
-				printk(KERN_INFO "%s: CPUfreq locked to 400MHz\n", __func__);
-			local_irq_disable();
-			preempt_disable();
-		}
-		//dave: method copied from thalamus
-
 	}
-
 	else
 		abort = 1;
 	spin_unlock_irqrestore(&state_lock, irqflags);
@@ -131,6 +132,7 @@ static void early_suspend(struct work_struct *work)
 			pos->suspend(pos);
 		}
 	}
+
 	mutex_unlock(&early_suspend_lock);
 
 	if (debug_mask & DEBUG_SUSPEND)
@@ -150,26 +152,27 @@ static void late_resume(struct work_struct *work)
 	unsigned long irqflags;
 	int abort = 0;
 
+	//dave
+	if ((state == SUSPENDED) && (deepidle_is_enabled()))
+	{
+		preempt_enable();
+		local_irq_enable();
+		ret = cpufreq_driver_target(cpufreq_cpu_get(0), 400000,
+				ENABLE_FURTHER_CPUFREQ);
+		if (ret < 0)
+			printk(KERN_WARNING "%s: Error %d unlocking CPUfreq\n", __func__, ret);
+		else
+			printk(KERN_INFO "%s: CPUfreq unlocked from 400MHz\n", __func__);
+		local_irq_disable();
+		preempt_disable();
+	}
+	//dave: method copied from thalamus
+
+
+
 	mutex_lock(&early_suspend_lock);
 	spin_lock_irqsave(&state_lock, irqflags);
 	if (state == SUSPENDED) {
-		//dave
-		if (deepidle_is_enabled()) 
-		{
-			preempt_enable();
-			local_irq_enable();
-			ret = cpufreq_driver_target(cpufreq_cpu_get(0), 400000,
-					ENABLE_FURTHER_CPUFREQ);
-			if (ret < 0)
-				printk(KERN_WARNING "%s: Error %d unlocking CPUfreq\n", __func__, ret);
-			else
-				printk(KERN_INFO "%s: CPUfreq unlocked from 400MHz\n", __func__);
-			local_irq_disable();
-			preempt_disable();
-		}
-		//dave: method copied from thalamus
-
-
 		state &= ~SUSPENDED;
 	}
 	else

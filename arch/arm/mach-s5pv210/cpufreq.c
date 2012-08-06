@@ -26,10 +26,6 @@
 #include <mach/regs-clock.h>
 #include <mach/cpu-freq-v210.h>
 
-#ifdef CONFIG_CPU_DIDLE
-#include <linux/deep_idle.h>
-#endif
-
 static struct clk *cpu_clk;
 static struct clk *dmc0_clk;
 static struct clk *dmc1_clk;

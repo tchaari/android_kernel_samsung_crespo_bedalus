@@ -178,9 +178,11 @@ static irqreturn_t touchkey_interrupt_thread(int irq, void *touchkey_devdata)
 		}
 	}
 
-	if (devdata->has_legacy_keycode) {
+	if (devdata->has_legacy_keycode)
+	{
 		scancode = (data & SCANCODE_MASK) - 1;
-		if (scancode < 0 || scancode >= devdata->pdata->keycode_cnt) {
+		if (scancode < 0 || scancode >= devdata->pdata->keycode_cnt)
+		{
 			dev_err(&devdata->client->dev, "%s: scancode is out of "
 				"range\n", __func__);
 			goto err;
@@ -189,31 +191,26 @@ static irqreturn_t touchkey_interrupt_thread(int irq, void *touchkey_devdata)
 			devdata->pdata->keycode[scancode],
 			!(data & UPDOWN_EVENT_MASK));
 
-#if defined(CONFIG_TOUCH_WAKE) || defined(CONFIG_BLD)
+#ifdef CONFIG_BLD
 		if (!(data & UPDOWN_EVENT_MASK))
-		    {
-#ifdef CONFIG_BLD			
 			touchkey_pressed();
 #endif
-		    }
-#endif
-	} else {
+	} else
+	{
 		for (i = 0; i < devdata->pdata->keycode_cnt; i++)
 			input_report_key(devdata->input_dev,
 				devdata->pdata->keycode[i],
 				!!(data & (1U << i)));
 
-#if defined(CONFIG_TOUCH_WAKE) || defined(CONFIG_BLD)
+#ifdef CONFIG_BLD
 		for (i = 0; i < devdata->pdata->keycode_cnt; i++)
-		    {
+	    	{
 			if(!!(data & (1U << i)))
-			    {
-#ifdef CONFIG_BLD			
+			{			
 				touchkey_pressed();
-#endif
 				break;
-			    }
-		    }
+			}
+	    	}
 #endif
 	}
 
@@ -425,13 +422,7 @@ static void cypress_touchkey_enable_led_notification(void){
 		enable_touchkey_backlights();
 	}
 	else
-#ifdef CONFIG_TOUCH_WAKE
-	    {
-		enable_touchkey_backlights();
-	    }
-#else
 	    pr_info("%s: cannot set notification led, touchkeys are enabled\n",__FUNCTION__);
-#endif
 }
 
 static void cypress_touchkey_disable_led_notification(void){
@@ -454,12 +445,6 @@ static void cypress_touchkey_disable_led_notification(void){
 		blndevdata->pdata->touchkey_onoff(TOUCHKEY_OFF);
 		#endif
 	}
-#ifdef CONFIG_TOUCH_WAKE
-	else
-	    {
-		disable_touchkey_backlights();
-	    }
-#endif	
 }
 
 static struct bln_implementation cypress_touchkey_bln = {

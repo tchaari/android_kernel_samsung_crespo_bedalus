@@ -2905,13 +2905,13 @@ static struct attribute_group herring_properties_attr_group = {
 static void herring_virtual_keys_init(void)
 {
 	struct kobject *properties_kobj;
-	int ret;
+	//int ret;
 
 	properties_kobj = kobject_create_and_add("board_properties", NULL);
 	if (properties_kobj)
 		ret = sysfs_create_group(properties_kobj,
 						&herring_properties_attr_group);
-	if (!properties_kobj || ret)
+	if (!properties_kobj)
 		pr_err("failed to create board_properties\n");
 }
 

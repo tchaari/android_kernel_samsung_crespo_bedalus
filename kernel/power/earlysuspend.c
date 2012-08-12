@@ -15,6 +15,7 @@
  *
  */
 
+
 #include <linux/earlysuspend.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
@@ -24,7 +25,6 @@
 #include <linux/workqueue.h>
 
 #include "power.h"
-
 
 enum {
 	DEBUG_USER_STATE = 1U << 0,

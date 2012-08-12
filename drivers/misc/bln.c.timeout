@@ -18,7 +18,7 @@
 #include <linux/timer.h>
 #include <linux/wakelock.h>
 
-static bool bln_enabled = false; /* is BLN function is enabled */
+static bool bln_enabled = true; /* is BLN function is enabled */
 static bool bln_ongoing = false; /* ongoing LED Notification */
 static int bln_blink_state = 0;
 static bool bln_suspended = false; /* is system suspended */
@@ -72,15 +72,23 @@ static void enable_led_notification(void)
 	if (!bln_enabled)
 		return;
 
-	if (in_kernel_blink) {
+	//if (in_kernel_blink) {
 		wake_lock(&bln_wake_lock);
 
 		/* Start timer */
 		blink_timer.expires = jiffies +
 				msecs_to_jiffies(blink_interval);
 		blink_count = max_blink_count;
-		add_timer(&blink_timer);
-	}
+		/*
+		 * Check for pending timer and use mod_timer
+		 * if it exists instead of attempting to
+		 * add another, which results in a panic
+		 */
+		if (timer_pending(&blink_timer))
+			mod_timer(&blink_timer, blink_timer.expires);
+		else
+			add_timer(&blink_timer);
+	//} dave: commented out the IF so we can use the timer even if user wants 'not blinking' 
 
 	bln_enable_backlights();
 	pr_info("%s: notification led enabled\n", __FUNCTION__);
@@ -97,7 +105,7 @@ static void disable_led_notification(void)
 	if (bln_suspended)
 		bln_disable_backlights();
 
-	if (in_kernel_blink)
+	//if (in_kernel_blink) //dave: same reason as above
 		del_timer(&blink_timer);
 
 	wake_unlock(&bln_wake_lock);
@@ -310,17 +318,20 @@ static void blink_callback(struct work_struct *blink_work)
 {
 	if (--blink_count == 0) {
 		pr_info("%s: notification timed out\n", __FUNCTION__);
-		bln_enable_backlights();
+		bln_disable_backlights();
 		del_timer(&blink_timer);
 		wake_unlock(&bln_wake_lock);
 		return;
 	}
 
-	if (bln_blink_state)
+	if (in_kernel_blink) //dave: only flip state if blink is enabled
+	{
+		if (bln_blink_state)
+			bln_enable_backlights();
+		else
+			bln_disable_backlights();
+	} else
 		bln_enable_backlights();
-	else
-		bln_disable_backlights();
-
 	bln_blink_state = !bln_blink_state;
 }
 

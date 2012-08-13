@@ -321,12 +321,6 @@ static void blink_callback(struct work_struct *blink_work)
 		bln_disable_backlights();
 		del_timer(&blink_timer);
 		wake_unlock(&bln_wake_lock);
-		bool bln_enabled = false; 
-		bool bln_ongoing = false;
-		int bln_blink_state = 0;
-		bool bln_suspended = false;
-		struct bln_implementation *bln_imp = NULL;
-		bool in_kernel_blink = false;
 		return;
 	}
 

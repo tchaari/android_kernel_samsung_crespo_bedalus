@@ -326,6 +326,8 @@ static void blink_callback(struct work_struct *blink_work)
 			bln_disable_backlights();
 		del_timer(&blink_timer);
 		wake_unlock(&bln_wake_lock);
+		blink_interval = 300;	/* on / off every 750ms */
+		proportional_timer = 150;
 		return;
 	}
 

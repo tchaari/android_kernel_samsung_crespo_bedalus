@@ -367,8 +367,8 @@ static struct s3cfb_lcd r61408 = {
 
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 (4608 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2 (5120 * SZ_1K)
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0 (13312 * SZ_1K) // 15Mb
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1 (13312 * SZ_1K) // 15Mb
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0 (11264 * SZ_1K) // 15Mb
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1 (11264 * SZ_1K) // 15Mb
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMD (S5PV210_LCD_WIDTH * \
 					     S5PV210_LCD_HEIGHT * 4 * \
 					     (CONFIG_FB_S3C_NR_BUFFERS + \
@@ -6051,7 +6051,7 @@ MACHINE_START(HERRING, "herring")
 	.map_io		= herring_map_io,
 	.init_machine	= herring_machine_init,
 #ifdef CONFIG_S5P_HIGH_RES_TIMERS
-	.timer		= &s5p_systimer_timer,
+	.timer		= &s5p_systimer,
 #else
 	.timer		= &s5p_timer,
 #endif

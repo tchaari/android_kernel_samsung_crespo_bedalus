@@ -34,9 +34,9 @@ static struct timer_list blink_timer =
 static void blink_callback(struct work_struct *blink_work);
 static DECLARE_WORK(blink_work, blink_callback);
 
-static uint32_t blink_interval = 300;	/* on / off every 750ms */
-static uint32_t max_blink_count = 600;  /* 10 minutes */
-static uint32_t proportional_timer = 150;
+static uint32_t blink_interval = 150;
+static uint32_t max_blink_count = 60; 
+static uint32_t proportional_timer = 75;
 static bool blink_finalstate = false;
 
 #define BACKLIGHTNOTIFICATION_VERSION 9
@@ -74,24 +74,21 @@ static void enable_led_notification(void)
 	if (!bln_enabled)
 		return;
 
-	//if (in_kernel_blink) {
-		wake_lock(&bln_wake_lock);
+	wake_lock(&bln_wake_lock);
 
-		/* Start timer */
-		blink_timer.expires = jiffies +
-				msecs_to_jiffies(blink_interval);
-		blink_count = max_blink_count;
-		/*
-		 * Check for pending timer and use mod_timer
-		 * if it exists instead of attempting to
-		 * add another, which results in a panic
-		 */
-		if (timer_pending(&blink_timer))
-			mod_timer(&blink_timer, blink_timer.expires);
-		else
-			add_timer(&blink_timer);
-	//} dave: commented out the IF so we can use the timer even if user wants 'not blinking' 
+	blink_timer.expires = jiffies +
+			msecs_to_jiffies(proportional_timer);
+	blink_count = max_blink_count;
 
+	//test against people who didn't read the instructions...
+	if (blink_finalstate == true && in_kernel_blink == false) 
+		blink_count = 1;
+	if (blink_count > 120)
+		blink_count = 120; 
+
+	if (timer_pending(&blink_timer))
+		del_timer(&blink_timer);
+	add_timer(&blink_timer);
 	bln_enable_backlights();
 	pr_info("%s: notification led enabled\n", __FUNCTION__);
 	bln_ongoing = true;
@@ -107,11 +104,10 @@ static void disable_led_notification(void)
 	if (bln_suspended)
 		bln_disable_backlights();
 
-	//if (in_kernel_blink) //dave: same reason as above
-		del_timer(&blink_timer);
-
+	del_timer(&blink_timer);
 	wake_unlock(&bln_wake_lock);
-
+	blink_interval = 150;
+	proportional_timer = 75;
 }
 
 static ssize_t backlightnotification_status_read(struct device *dev,
@@ -318,40 +314,53 @@ EXPORT_SYMBOL(bln_is_ongoing);
 
 static void blink_callback(struct work_struct *blink_work)
 {
-	if (--blink_count == 0) {
-		pr_info("%s: notification timed out\n", __FUNCTION__);
-		if (blink_finalstate)
-			bln_enable_backlights();
-		else
-			bln_disable_backlights();
-		del_timer(&blink_timer);
-		wake_unlock(&bln_wake_lock);
-		blink_interval = 300;	/* on / off every 750ms */
-		proportional_timer = 150;
-		return;
-	}
-
-	if (in_kernel_blink) //dave: only flip state if blink is enabled
+	if (in_kernel_blink)
 	{
 		if (bln_blink_state)
 			bln_enable_backlights();
 		else
 			bln_disable_backlights();
-	} else
-		bln_enable_backlights();
-	bln_blink_state = !bln_blink_state;
+		if (blink_interval >= 600)
+		{
+			blink_count--;
+			blink_interval = 150;
+			proportional_timer = 75;
+		}
+		bln_blink_state = !bln_blink_state;
+	}
+	if (blink_count <= 0)
+	{
+		pr_info("%s: notification timed out\n", __FUNCTION__);
+		if (blink_finalstate)
+			bln_enable_backlights();
+		else
+		{
+			blink_interval = 150;
+			proportional_timer = 75;
+			bln_disable_backlights();
+		}
+		del_timer(&blink_timer);
+		wake_unlock(&bln_wake_lock);
+	}
 }
 
 void bl_timer_callback(unsigned long data)
 {
 	schedule_work(&blink_work);
-	if (bln_blink_state) 
-		mod_timer(&blink_timer, jiffies + msecs_to_jiffies(proportional_timer));
-	else 
+	if (in_kernel_blink)
 	{
-		mod_timer(&blink_timer, jiffies + msecs_to_jiffies(blink_interval));
-		blink_interval = (int)(101 * blink_interval)/100;
-		proportional_timer = (int)(5 * blink_interval)/10;
+		if (bln_blink_state) 
+			mod_timer(&blink_timer, jiffies + msecs_to_jiffies(proportional_timer));
+		else 
+		{
+			mod_timer(&blink_timer, jiffies + msecs_to_jiffies(blink_interval));
+			blink_interval = (int)(107 * blink_interval)/100;
+			proportional_timer = (int)(5 * blink_interval)/10;
+		}
+	} else
+	{
+		blink_count--;
+		mod_timer(&blink_timer, jiffies + msecs_to_jiffies(10000));
 	}
 }
 

@@ -93,7 +93,7 @@ static int s5p_init_cpuidle(void)
 	/* Wait for interrupt state */
 	device->states[0].enter = s5p_enter_idle_normal;
 	device->states[0].exit_latency = 20;	/* uS */
-	device->states[0].target_residency = 20;
+	device->states[0].target_residency = 10000;
 	device->states[0].flags = CPUIDLE_FLAG_TIME_VALID;
 	strcpy(device->states[0].name, "C1");
 	strcpy(device->states[0].desc, "ARM clock gating - WFI");
@@ -102,7 +102,7 @@ static int s5p_init_cpuidle(void)
 		/* Deep-Idle top ON Wait for interrupt state */
 	device->states[1].enter = s5p_enter_idle_deep;
 	device->states[1].exit_latency = 600;
-	device->states[1].target_residency = 6000;
+	device->states[1].target_residency = 999999999;
 	device->states[1].flags = CPUIDLE_FLAG_TIME_VALID;
 	strcpy(device->states[1].name, "C2");
 	strcpy(device->states[1].desc, "ARM Power gating - WFI");
@@ -111,7 +111,7 @@ static int s5p_init_cpuidle(void)
 	/* Deep-Idle top OFF Wait for interrupt state */
 	device->states[2].enter = s5p_enter_idle_deep;
 	device->states[2].exit_latency = 1000;
-	device->states[2].target_residency = 6000;
+	device->states[2].target_residency = 5000;
 	device->states[2].flags = CPUIDLE_FLAG_TIME_VALID;
 	strcpy(device->states[2].name, "C3");
 	strcpy(device->states[2].desc, "ARM/TOP/SUB Power gating - WFI");

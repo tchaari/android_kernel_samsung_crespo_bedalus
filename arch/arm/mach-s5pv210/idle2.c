@@ -709,14 +709,14 @@ inline int s5p_idle_prepare(struct cpuidle_device *device)
 		/*
 		 * Ignore DEEP-IDLE TOP block OFF state
 		 */
-		device->states[1].flags &= ~CPUIDLE_FLAG_IGNORE;
+		device->states[1].flags |= CPUIDLE_FLAG_IGNORE;//&= ~CPUIDLE_FLAG_IGNORE; dave
 		device->states[2].flags |= CPUIDLE_FLAG_IGNORE;
 	} else {
 		/*
 		 * Enable both DEEP-IDLE states and allow
 		 * cpuidle governor to choose the best one
 		 */
-		device->states[1].flags &= ~CPUIDLE_FLAG_IGNORE;
+		device->states[1].flags |= CPUIDLE_FLAG_IGNORE;//&= ~CPUIDLE_FLAG_IGNORE; dave
 		device->states[2].flags &= ~CPUIDLE_FLAG_IGNORE;
 	}
 	return 0;

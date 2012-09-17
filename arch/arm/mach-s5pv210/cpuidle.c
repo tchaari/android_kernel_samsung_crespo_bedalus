@@ -92,7 +92,7 @@ static int s5p_init_cpuidle(void)
 
 	/* Wait for interrupt state */
 	device->states[0].enter = s5p_enter_idle_normal;
-	device->states[0].exit_latency = 20;	/* uS */
+	device->states[0].exit_latency = 1;	/* uS */
 	device->states[0].target_residency = 10000;
 	device->states[0].flags = CPUIDLE_FLAG_TIME_VALID;
 	strcpy(device->states[0].name, "C1");

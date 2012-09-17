@@ -498,11 +498,11 @@ inline int s5p_enter_idle_deep(struct cpuidle_device *device,
 
 	switch (requested_state){
 	case STATE_C2:
-		if (unlikely(idle2_pre_entry_check())) {
+		//if (unlikely(idle2_pre_entry_check())) {//dave: pointless check if C2 disabled
 			device->last_state = &device->states[0];
 #ifdef CONFIG_S5P_IDLE2_STATS
 			fallthrough++;
-			idle_state = 0;
+			idle_state = 0;/*dave: prevent C2 completely
 #endif
 			break;
 		} else {
@@ -519,11 +519,11 @@ inline int s5p_enter_idle_deep(struct cpuidle_device *device,
 #ifdef CONFIG_S5P_IDLE2_STATS
 				done_C2++;
 				idle2_update_wakeup_stats();
-				idle_state = 1;
+				idle_state = 1;*/
 #endif
 				break;
-			}
-		}
+			//}
+		//}dave: disabled scopes
 	case STATE_C3:
 		if (unlikely(idle2_pre_entry_check())) {
 			device->last_state = &device->states[0];
@@ -536,25 +536,25 @@ inline int s5p_enter_idle_deep(struct cpuidle_device *device,
 			/*
 			 * Tell cpuidle governor that we went into
 			 * C2 instead of C3
-			 */
+			 //dave1startcut
 			device->last_state = &device->states[1];
 			idle2_flags |= TOP_BLOCK_ON;
 			err = s5p_enter_idle2();
-			if (unlikely(err)) {
+			if (unlikely(err)) {*///dave1endcut
 				device->last_state = &device->states[0];
 #ifdef CONFIG_S5P_IDLE2_STATS
 				fallthrough++;
 				idle_state = 0;
 #endif
-				break;
+				/*break;dave2startcut
 			} else {
 #ifdef CONFIG_S5P_IDLE2_STATS
 				done_C2++;
 				idle2_update_wakeup_stats();
 				idle_state = 1;
-#endif
+#endif*///dave2endcut
 				break;
-			}
+			//}scope not needed after code cut above 
 		} else {
 			idle2_flags &= ~TOP_BLOCK_ON;
 			err = s5p_enter_idle2();

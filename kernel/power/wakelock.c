@@ -26,6 +26,7 @@
 
 #ifdef CONFIG_S5P_IDLE2
 #include <mach/idle2.h>
+extern bool idle2_audio;
 #endif /* CONFIG_S5P_IDLE2 */
 
 enum {
@@ -284,8 +285,10 @@ static void suspend(struct work_struct *work)
 		return;
 	}
 #ifdef CONFIG_S5P_IDLE2
-	idle2_kill(1, 0);
-	pr_info("%s: idle2_kill(1, 0)\n", __func__);
+	if (idle2_audio==true) {
+		idle2_kill(1, 0);
+		pr_info("%s: idle2_kill(1, 0)\n", __func__);
+	}
 #endif
 	entry_event_num = current_event_num;
 	sys_sync();
@@ -321,8 +324,10 @@ static void suspend(struct work_struct *work)
 		wake_lock_timeout(&unknown_wakeup, HZ / 2);
 	}
 #ifdef CONFIG_S5P_IDLE2
-	idle2_kill(0, 0);
-	pr_info("%s: idle2_kill(0, 0)\n", __func__);
+	if (idle2_audio==true) {
+		idle2_kill(0, 0);
+		pr_info("%s: idle2_kill(0, 0)\n", __func__);
+	}
 #endif
 }
 static DECLARE_WORK(suspend_work, suspend);

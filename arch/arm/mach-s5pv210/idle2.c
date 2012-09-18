@@ -271,6 +271,9 @@ inline static bool check_C3_clock_gating(void)
 inline static int s5p_enter_idle2(void)
 {
 	unsigned long tmp;
+	
+	//dave: audio only 
+	if (!idle2_audio) return -EINVAL;
 
 	if (unlikely(pm_cpu_sleep == NULL)) {
 		pr_err("%s: error: no cpu sleep function\n", __func__);

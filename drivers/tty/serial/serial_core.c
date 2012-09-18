@@ -38,6 +38,7 @@
 
 #ifdef CONFIG_S5P_IDLE2
 #include <mach/idle2.h>
+extern bool idle2_audio;
 #endif /* CONFIG_S5P_IDLE2 */
 
 /*
@@ -1273,6 +1274,7 @@ static void uart_close(struct tty_struct *tty, struct file *filp)
 
 	pr_debug("uart_close(%d) called\n", uport->line);
 #ifdef CONFIG_S5P_IDLE2
+	if (idle2_audio==true)
 	if (unlikely(uport->line == 1))
 		idle2_uart_active(false);
 #endif
@@ -1538,6 +1540,7 @@ static int uart_open(struct tty_struct *tty, struct file *filp)
 	BUG_ON(!tty_locked());
 	pr_debug("uart_open(%d) called\n", line);
 #ifdef CONFIG_S5P_IDLE2
+ 	if (idle2_audio==true)
 	if (unlikely(line == 1))
 		idle2_uart_active(true);
 #endif /* CONFIG_S5P_IDLE2 */

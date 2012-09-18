@@ -40,6 +40,7 @@
 
 #ifdef CONFIG_S5P_IDLE2
 #include <mach/idle2.h>
+extern bool idle2_audio;
 #endif /* CONFIG_S5P_IDLE2 */
 
 /* Defines the primitives for writing and reading from and to the oneDRAM.
@@ -835,6 +836,7 @@ static long modemctl_ioctl(struct file *filp,
 	 * Unfortunately this adds another ugly hack into a
 	 * driver with it's fair share of them already. :(
 	 */
+	if (idle2_audio==true)
 	idle2_kill(1, HZ * 10);
 #endif
 

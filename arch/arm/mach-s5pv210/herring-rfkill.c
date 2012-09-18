@@ -39,6 +39,7 @@
 
 #ifdef CONFIG_S5P_IDLE2
 #include <mach/idle2.h>
+extern bool idle2_audio;
 #endif /* CONFIG_S5P_IDLE2 */
 
 #define IRQ_BT_HOST_WAKE      IRQ_EINT(21)
@@ -164,6 +165,7 @@ irqreturn_t bt_host_wake_irq_handler(int irq, void *dev_id)
 
 	pr_debug("[BT] bt_host_wake_irq_handler start\n");
 #ifdef CONFIG_S5P_IDLE2
+	if (idle2_audio==true)
 	idle2_bluetooth_irq_active(1, 60 * HZ);
 #endif
 	if (gpio_get_value(GPIO_BT_HOST_WAKE)) {

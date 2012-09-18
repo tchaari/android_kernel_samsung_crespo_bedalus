@@ -51,6 +51,7 @@
 #endif
 #ifdef CONFIG_S5P_IDLE2
 #include <mach/idle2.h>
+extern bool idle2_audio;
 #endif /* CONFIG_S5P_IDLE2 */
 
 #define POLLING_INTERVAL	1000
@@ -563,11 +564,13 @@ update:
 	if ((chg->cable_status == CABLE_TYPE_USB) && vdc_status) {
 		wake_lock(&chg->vbus_wake_lock);
 #ifdef CONFIG_S5P_IDLE2
+		if (idle2_audio==true)
 		idle2_external_active();
 #endif
 	} else {
 		wake_lock_timeout(&chg->vbus_wake_lock, HZ / 2);
 #ifdef CONFIG_S5P_IDLE2
+		if (idle2_audio==true)
 		idle2_external_inactive(10 * HZ);
 #endif
 	}

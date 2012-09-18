@@ -27,6 +27,7 @@
 
 #ifdef CONFIG_S5P_IDLE2
 #include <mach/idle2.h>
+extern bool idle2_audio;
 #endif /* CONFIG_S5P_IDLE2 */
 
 
@@ -88,6 +89,7 @@ static void early_suspend(struct work_struct *work)
 	spin_lock_irqsave(&state_lock, irqflags);
 	if (state == SUSPEND_REQUESTED) {
 #ifdef CONFIG_S5P_IDLE2
+		if (idle2_audio==true)
 		earlysuspend_active_fn(true);
 #endif
 		state |= SUSPENDED;
@@ -135,6 +137,7 @@ static void late_resume(struct work_struct *work)
 	spin_lock_irqsave(&state_lock, irqflags);
 	if (state == SUSPENDED) {
 #ifdef CONFIG_S5P_IDLE2
+		if (idle2_audio==true)
 		earlysuspend_active_fn(false);
 #endif
 		state &= ~SUSPENDED;

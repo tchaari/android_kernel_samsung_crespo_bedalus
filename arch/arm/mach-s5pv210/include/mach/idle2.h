@@ -17,5 +17,7 @@ extern void idle2_uart_active(bool flag);
 extern void idle2_update_wakeup_stats(void);
 extern void idle2_kill(bool kill, u16 timeout);
 extern void idle2_bluetooth_irq_active(bool kill, u16 timeout);
+//dave
+extern bool idle2_audio;
 
 #define IDLE2_VERSION 	391

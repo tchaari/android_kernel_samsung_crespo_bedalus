@@ -18,7 +18,7 @@
 #include <linux/wait.h>
 #include <linux/delay.h>
 #include "power.h"
-#include "../../arch/arm/mach-s5pv210/herring.h"
+#include <asm/system.h>
 
 static wait_queue_head_t fb_state_wq;
 static DEFINE_SPINLOCK(fb_state_lock);
@@ -33,7 +33,7 @@ static void stop_drawing_early_suspend(struct early_suspend *h)
 {
 	int ret;
 	unsigned long irq_flags;
-	if (herring_is_tft_dev())
+	if (system_rev >= 0x30)
 		msleep(300); //dave: check if slcd, if so apply crt hack
 	spin_lock_irqsave(&fb_state_lock, irq_flags);
 	fb_state = FB_STATE_REQUEST_STOP_DRAWING;

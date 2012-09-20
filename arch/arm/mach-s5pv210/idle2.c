@@ -47,7 +47,7 @@
 #define STATE_C2		2
 #define STATE_C3		3
 #define MAX_CHK_DEV		5
-
+extern bool idle2_audio; //dave
 /* IDLE2 control flags */
 static u16 idle2_flags;
 #define IDLE2_DISABLED		(1 << 0)
@@ -200,6 +200,8 @@ inline static bool idle2_pre_entry_check(void)
 	/*
 	 * Check for HSMMC activity
 	 */
+	if (idle2_audio==false) return true; //dave
+
 	for (iter = 0; iter < 2; iter++) {
 		if (unlikely(iter > 1)) {
 		pr_err("Invalid ch[%d] for SD/MMC \n", iter);
@@ -258,6 +260,8 @@ inline static bool idle2_pre_entry_check(void)
 inline static bool check_C3_clock_gating(void)
 {
 	unsigned long tmp;
+	if (idle2_audio==false) return true; //dave
+
 	tmp = __raw_readl(S5P_CLKGATE_IP0);
 	if (unlikely(tmp & S5P_CLKGATE_IP0_G3D)) {
 		return true;
@@ -272,8 +276,7 @@ inline static int s5p_enter_idle2(void)
 {
 	unsigned long tmp;
 	
-	//dave: audio only 
-	if (!idle2_audio) return -EINVAL;
+	if (idle2_audio==false) return -EBUSY; //dave
 
 	if (unlikely(pm_cpu_sleep == NULL)) {
 		pr_err("%s: error: no cpu sleep function\n", __func__);
@@ -478,6 +481,8 @@ inline int s5p_enter_idle_deep(struct cpuidle_device *device,
 	 */
 	unsigned char requested_state = (state_name[1] - 48);
 
+	if (idle2_audio==false) return 0; //dave
+	
 	do_gettimeofday(&before);
 
 	local_irq_disable();
@@ -616,6 +621,8 @@ inline int s5p_enter_idle_deep(struct cpuidle_device *device,
 
 void idle2_kill(bool kill, u16 timeout)
 {
+	if (idle2_audio==false) return; //dave
+
 	if (!(idle2_flags & WORK_INITIALISED))
 		return;
 	if (kill && timeout) {
@@ -650,6 +657,7 @@ static void idle2_bluetooth_irq_timeout_work_fn(struct work_struct *work)
 
 static void idle2_lock_cpufreq_work_fn(struct work_struct *work)
 {
+	if (idle2_audio==false) return; //dave
 	cpufreq_driver_target(cpufreq_cpu_get(0), IDLE2_FREQ,
 			DISABLE_FURTHER_CPUFREQ);
 	pr_info("%s: CPUfreq locked to %dKHz\n", __func__, IDLE2_FREQ);
@@ -657,6 +665,7 @@ static void idle2_lock_cpufreq_work_fn(struct work_struct *work)
 
 static void idle2_unlock_cpufreq_work_fn(struct work_struct *work)
 {
+	if (idle2_audio==false) return; //dave
 	cpufreq_driver_target(cpufreq_cpu_get(0), IDLE2_FREQ,
 			ENABLE_FURTHER_CPUFREQ);
 	pr_info("%s: CPUfreq unlocked from %dKHz\n", __func__, IDLE2_FREQ);
@@ -664,6 +673,8 @@ static void idle2_unlock_cpufreq_work_fn(struct work_struct *work)
 
 void earlysuspend_active_fn(bool flag)
 {
+	if (idle2_audio==false) return; //dave
+
 	if (!(idle2_flags & WORK_INITIALISED))
 		return;
 	if (flag) {
@@ -679,6 +690,7 @@ void earlysuspend_active_fn(bool flag)
 
 static void idle2_external_active_work_fn(struct work_struct *work)
 {
+	if (idle2_audio==false) return; //dave
 	cancel_delayed_work(&idle2_external_inactive_work);
 	idle2_flags |= EXTERNAL_ACTIVE;
 	pr_info("idle2: |= EXTERNAL_ACTIVE\n");
@@ -696,6 +708,8 @@ static void idle2_external_inactive_work_fn(struct work_struct *work)
  */
 void idle2_external_active(void)
 {
+	if (idle2_audio==false) return; //dave
+
 	if ((idle2_flags & WORK_INITIALISED)
 		&& (!(idle2_flags & EXTERNAL_ACTIVE)
 		|| (idle2_flags & INACTIVE_PENDING))) {
@@ -706,6 +720,8 @@ void idle2_external_active(void)
 
 void idle2_external_inactive(unsigned long delay)
 {
+	if (idle2_audio==false) return; //dave
+
 	if ((idle2_flags & WORK_INITIALISED)
 		&& (idle2_flags & EXTERNAL_ACTIVE)
 		&& (!(idle2_flags & INACTIVE_PENDING))) {
@@ -722,6 +738,7 @@ void idle2_external_inactive(unsigned long delay)
 
 void idle2_bluetooth_irq_active(bool kill, u16 timeout)
 {
+	if (idle2_audio==false) return; //dave
 	if ((idle2_flags & WORK_INITIALISED) && kill && timeout) {
 		if (delayed_work_pending(&idle2_bluetooth_irq_timeout_work))
 			cancel_delayed_work(&idle2_bluetooth_irq_timeout_work);

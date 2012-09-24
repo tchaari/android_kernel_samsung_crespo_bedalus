@@ -365,7 +365,7 @@ struct clocksource clocksource_s5p = {
 	.flags		= CLOCK_SOURCE_IS_CONTINUOUS,
 };
 
-static void s5p_init_clocksource(unsigned long rate)
+static void __init s5p_init_clocksource(unsigned long rate)
 {
 	static char err[] __initdata = KERN_ERR
 			"%s: can't register clocksource!\n";
@@ -468,7 +468,7 @@ static void s5p_tick_timer_setup(void)
 	s5p_tick_timer_start((rate / HZ) - 1, 1);
 }
 
-static void __init s5p_timer_init(void)
+static void s5p_timer_init(void)
 {
 
 	/* clock configuration setting and enable */

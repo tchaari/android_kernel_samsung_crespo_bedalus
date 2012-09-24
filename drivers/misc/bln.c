@@ -24,6 +24,7 @@ static int bln_blink_state = 0;
 static bool bln_suspended = false; /* is system suspended */
 static struct bln_implementation *bln_imp = NULL;
 static bool in_kernel_blink = false;
+static bool shrink_blink = false;
 static uint32_t blink_count;
 
 static struct wake_lock bln_wake_lock;
@@ -38,6 +39,8 @@ static uint32_t blink_interval = 150;
 static uint32_t max_blink_count = 60; 
 static uint32_t proportional_timer = 75;
 static bool blink_finalstate = false;
+static uint32_t blink_mode = 2;
+static uint32_t blink_speed = 1; //1fast 2medium 3slow 4very slow 5very very slow
 
 #define BACKLIGHTNOTIFICATION_VERSION 9
 
@@ -80,12 +83,6 @@ static void enable_led_notification(void)
 			msecs_to_jiffies(proportional_timer);
 	blink_count = max_blink_count;
 
-	//test against people who didn't read the instructions...
-	if (blink_finalstate == true && in_kernel_blink == false) 
-		blink_count = 1;
-	if (blink_count > 120)
-		blink_count = 120; 
-
 	if (timer_pending(&blink_timer))
 		del_timer(&blink_timer);
 	add_timer(&blink_timer);
@@ -106,8 +103,8 @@ static void disable_led_notification(void)
 
 	del_timer(&blink_timer);
 	wake_unlock(&bln_wake_lock);
-	blink_interval = 150;
-	proportional_timer = 75;
+	blink_interval = (150 * blink_speed);
+	proportional_timer = (75 * blink_speed);
 }
 
 static ssize_t backlightnotification_status_read(struct device *dev,
@@ -204,19 +201,57 @@ static ssize_t blink_finalstate_status_write(struct device *dev,
 	return size;
 }
 
-static ssize_t max_blink_count_status_read(struct device *dev,
+static ssize_t max_blink_count_status_read(struct device *dev, //1
 		struct device_attribute *attr, char *buf)
 {
 	return sprintf(buf,"%u\n", max_blink_count);
 }
 
-static ssize_t max_blink_count_status_write(struct device *dev,
+static ssize_t max_blink_count_status_write(struct device *dev, //1
 		struct device_attribute *attr, const char *buf, size_t size)
 {
 	unsigned int data;
 
 	if (sscanf(buf, "%u\n", &data) == 1)
 		max_blink_count = data;
+	else
+		pr_info("%s: input error\n", __FUNCTION__);
+
+	return size;
+}
+
+static ssize_t blink_mode_status_read(struct device *dev, //2
+		struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf,"%u\n", blink_mode);
+}
+
+static ssize_t blink_mode_status_write(struct device *dev, //2
+		struct device_attribute *attr, const char *buf, size_t size)
+{
+	unsigned int data;
+
+	if (sscanf(buf, "%u\n", &data) == 1)
+		blink_mode = data;
+	else
+		pr_info("%s: input error\n", __FUNCTION__);
+
+	return size;
+}
+
+static ssize_t blink_speed_status_read(struct device *dev, //3
+		struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf,"%u\n", blink_speed);
+}
+
+static ssize_t blink_speed_status_write(struct device *dev, //3
+		struct device_attribute *attr, const char *buf, size_t size)
+{
+	unsigned int data;
+
+	if (sscanf(buf, "%u\n", &data) == 1)
+		blink_speed = data;
 	else
 		pr_info("%s: input error\n", __FUNCTION__);
 
@@ -277,6 +312,12 @@ static DEVICE_ATTR(blink_finalstate, S_IRUGO | S_IWUGO,
 static DEVICE_ATTR(max_blink_count, S_IRUGO | S_IWUGO,
 		max_blink_count_status_read,
 		max_blink_count_status_write);
+static DEVICE_ATTR(blink_mode, S_IRUGO | S_IWUGO,
+		blink_mode_status_read,
+		blink_mode_status_write);
+static DEVICE_ATTR(blink_speed, S_IRUGO | S_IWUGO,
+		blink_speed_status_read,
+		blink_speed_status_write);
 static DEVICE_ATTR(version, S_IRUGO , backlightnotification_version, NULL);
 
 static struct attribute *bln_notification_attributes[] = {
@@ -286,6 +327,8 @@ static struct attribute *bln_notification_attributes[] = {
 	&dev_attr_in_kernel_blink.attr,
 	&dev_attr_blink_finalstate.attr,
 	&dev_attr_max_blink_count.attr,
+	&dev_attr_blink_mode.attr,
+	&dev_attr_blink_speed.attr,	
 	&dev_attr_version.attr,
 	NULL
 };
@@ -320,12 +363,7 @@ static void blink_callback(struct work_struct *blink_work)
 			bln_enable_backlights();
 		else
 			bln_disable_backlights();
-		if (blink_interval >= 600)
-		{
-			blink_count--;
-			blink_interval = 150;
-			proportional_timer = 75;
-		}
+
 		bln_blink_state = !bln_blink_state;
 	}
 	if (blink_count <= 0)
@@ -335,8 +373,8 @@ static void blink_callback(struct work_struct *blink_work)
 			bln_enable_backlights();
 		else
 		{
-			blink_interval = 150;
-			proportional_timer = 75;
+			blink_interval = (150 * blink_speed);
+			proportional_timer = (75 * blink_speed);
 			bln_disable_backlights();
 		}
 		del_timer(&blink_timer);
@@ -347,15 +385,71 @@ static void blink_callback(struct work_struct *blink_work)
 void bl_timer_callback(unsigned long data)
 {
 	schedule_work(&blink_work);
+	//test against people who didn't read the instructions...
+	if (blink_finalstate == true && in_kernel_blink == false) 
+		blink_count = 1;
+	if ((blink_mode != 1) && (blink_count > 120))
+		blink_count = 120; 
+	if (blink_mode < 1 || blink_mode > 4) 
+		blink_mode = 2;
+	if (blink_speed < 1 || blink_speed > 10)
+		blink_speed = 1;
+
 	if (in_kernel_blink)
 	{
-		if (bln_blink_state) 
+		if (bln_blink_state)
 			mod_timer(&blink_timer, jiffies + msecs_to_jiffies(proportional_timer));
 		else 
 		{
 			mod_timer(&blink_timer, jiffies + msecs_to_jiffies(blink_interval));
-			blink_interval = (int)(107 * blink_interval)/100;
-			proportional_timer = (int)(5 * blink_interval)/10;
+			if (blink_mode == 1)
+			{
+				blink_count--;
+			}
+			if (blink_mode == 2)
+			{
+				blink_interval = (int)(107 * blink_interval)/100;
+				proportional_timer = (int)(5 * blink_interval)/10;
+				if (blink_interval >= (600 * blink_speed))
+				{
+					blink_interval = (150 * blink_speed);
+					proportional_timer = (75 * blink_speed);
+					blink_count--;
+				}
+
+			}
+			if (blink_mode == 3)
+			{
+				blink_interval = (int)(94 * blink_interval)/100;
+				proportional_timer = (int)(5 * blink_interval)/10;
+				if (blink_interval <= (150 * blink_speed))
+				{
+					blink_interval = (600 * blink_speed);
+					proportional_timer = (300 * blink_speed);
+					blink_count--;
+				}
+			}
+			if (blink_mode == 4)
+			{
+				//if breached lower threshold then increse delays
+				if (blink_interval < (150 * blink_speed))
+					shrink_blink = false;
+				//if breached upper, then shrink				
+				if (blink_interval > (600 * blink_speed))
+				{
+					shrink_blink = true;
+					blink_count --;
+				}
+				if (shrink_blink) 
+				{
+					blink_interval = (int)(94 * blink_interval)/100;
+					proportional_timer = (int)(5 * blink_interval)/10;
+				} else
+				{
+					blink_interval = (int)(107 * blink_interval)/100;
+					proportional_timer = (int)(5 * blink_interval)/10;
+				}
+			}
 		}
 	} else
 	{

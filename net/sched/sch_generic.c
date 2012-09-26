@@ -10,6 +10,7 @@
  *              Jamal Hadi Salim, <hadi@cyberus.ca> 990601
  *              - Ingress support
  */
+#pragma GCC diagnostic ignored "-Waddress"
 
 #include <linux/bitops.h>
 #include <linux/module.h>

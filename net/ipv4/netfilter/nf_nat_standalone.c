@@ -5,6 +5,8 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
+#pragma GCC diagnostic ignored "-Waddress"
+
 #include <linux/types.h>
 #include <linux/icmp.h>
 #include <linux/gfp.h>

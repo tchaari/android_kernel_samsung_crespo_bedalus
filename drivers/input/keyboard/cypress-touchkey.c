@@ -162,7 +162,7 @@ out:
 
 static irqreturn_t touchkey_interrupt_thread(int irq, void *touchkey_devdata)
 {
-	u8 data;
+	u8 data = 0;
 	int i;
 	int ret;
 	int scancode;

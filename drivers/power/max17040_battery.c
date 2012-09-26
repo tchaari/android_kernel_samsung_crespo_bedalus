@@ -92,7 +92,7 @@ static int max17040_get_property(struct power_supply *psy,
 	return 0;
 }
 
-static int max17040_write_reg(struct i2c_client *client, int reg, u8 value)
+/*static int max17040_write_reg(struct i2c_client *client, int reg, u8 value)
 {
 	int ret;
 
@@ -102,7 +102,7 @@ static int max17040_write_reg(struct i2c_client *client, int reg, u8 value)
 		dev_err(&client->dev, "%s: err %d\n", __func__, ret);
 
 	return ret;
-}
+}*/
 
 static int max17040_read_reg(struct i2c_client *client, int reg)
 {

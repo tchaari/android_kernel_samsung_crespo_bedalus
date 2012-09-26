@@ -859,7 +859,7 @@ static long modemctl_ioctl(struct file *filp,
 	/* CDMA modem update in recovery mode */
 	case IOCTL_MODEM_FW_UPDATE:
 		pr_info("IOCTL_MODEM_FW_UPDATE\n");
-		if (arg == NULL) {
+		if (arg == 0) {
 			pr_err("No firmware");
 			break;
 		}
@@ -1165,8 +1165,6 @@ static int __devinit modemctl_probe(struct platform_device *pdev)
 
 	return 0;
 
-err_irq_mbox:
-	free_irq(mc->irq_mbox, mc);
 err_irq_bp:
 	free_irq(mc->irq_bp, mc);
 err_ioremap:

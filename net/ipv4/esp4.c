@@ -457,7 +457,7 @@ static u32 esp4_get_mtu(struct xfrm_state *x, int mtu)
 	struct esp_data *esp = x->data;
 	u32 blksize = ALIGN(crypto_aead_blocksize(esp->aead), 4);
 	u32 align = max_t(u32, blksize, esp->padlen);
-	unsigned int net_adj;
+	unsigned int net_adj=0;
 
 	switch (x->props.mode) {
 	case XFRM_MODE_TRANSPORT:

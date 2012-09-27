@@ -1,3 +1,5 @@
+#pragma GCC diagnostic ignored "-Wunused-value"
+
 #define S_SIZE (1024 - (sizeof(unsigned int) + 1))
 
 struct sbuff {

@@ -296,7 +296,7 @@ static int snd_soc_16_16_write(struct snd_soc_codec *codec, unsigned int reg,
 static int snd_soc_hw_bulk_write_raw(struct snd_soc_codec *codec, unsigned int reg,
 				     const void *data, size_t len)
 {
-	int ret;
+	int ret=0;
 
 	/* To ensure that we don't get out of sync with the cache, check
 	 * whether the base register is volatile or if we've directly asked

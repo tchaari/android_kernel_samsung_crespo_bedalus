@@ -164,7 +164,7 @@ extern struct resource * __request_region(struct resource *,
 #define release_mem_region(start,n)	__release_region(&iomem_resource, (start), (n))
 
 extern int __check_region(struct resource *, resource_size_t, resource_size_t);
-extern void __release_region(struct resource *, resource_size_t,
+extern int __release_region(struct resource *, resource_size_t,
 				resource_size_t);
 
 static inline int __deprecated check_region(resource_size_t s,

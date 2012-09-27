@@ -3967,7 +3967,7 @@ static inline u64 mem_cgroup_usage(struct mem_cgroup *mem, bool swap)
 static u64 mem_cgroup_read(struct cgroup *cont, struct cftype *cft)
 {
 	struct mem_cgroup *mem = mem_cgroup_from_cont(cont);
-	u64 val;
+	u64 val=0;
 	int type, name;
 
 	type = MEMFILE_TYPE(cft->private);

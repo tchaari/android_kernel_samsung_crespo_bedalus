@@ -895,7 +895,7 @@ EXPORT_SYMBOL(__check_region);
  *
  * The described resource region must match a currently busy region.
  */
-void __release_region(struct resource *parent, resource_size_t start,
+int __release_region(struct resource *parent, resource_size_t start,
 			resource_size_t n)
 {
 	struct resource **p;
@@ -923,7 +923,7 @@ void __release_region(struct resource *parent, resource_size_t start,
 			if (res->flags & IORESOURCE_MUXED)
 				wake_up(&muxed_resource_wait);
 			kfree(res);
-			return;
+			return 0;
 		}
 		p = &res->sibling;
 	}
@@ -933,6 +933,7 @@ void __release_region(struct resource *parent, resource_size_t start,
 	printk(KERN_WARNING "Trying to free nonexistent resource "
 		"<%016llx-%016llx>\n", (unsigned long long)start,
 		(unsigned long long)end);
+	return 0;
 }
 EXPORT_SYMBOL(__release_region);
 

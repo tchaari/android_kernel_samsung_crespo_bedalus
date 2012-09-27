@@ -3042,6 +3042,7 @@ cfq_async_queue_prio(struct cfq_data *cfqd, int ioprio_class, int ioprio)
 	default:
 		BUG();
 	}
+	return &cfqd->async_idle_cfqq;//silence compiler warning
 }
 
 static struct cfq_queue *

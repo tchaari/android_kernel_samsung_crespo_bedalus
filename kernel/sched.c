@@ -4215,6 +4215,7 @@ pick_next_task(struct rq *rq)
 	}
 
 	BUG(); /* the idle class will always have a runnable task */
+	return p;
 }
 
 /*

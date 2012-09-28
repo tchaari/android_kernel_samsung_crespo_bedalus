@@ -85,7 +85,7 @@ static int mfc_open(struct inode *inode, struct file *file)
 
 		mfc_load_firmware(mfc_fw_info->data, mfc_fw_info->size);
 
-		if (!mfc_init_hw() == false) {//if (mfc_init_hw() != true)
+		if (!mfc_init_hw() == true) {//if (mfc_init_hw() != true)
 			clk_disable(mfc_sclk);
 			ret =  -ENODEV;
 			goto err_regulator;

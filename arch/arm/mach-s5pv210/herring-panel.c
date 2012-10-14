@@ -354,7 +354,7 @@ struct s5p_panel_data herring_panel_data = {
 	.configure_mtp_gpios = configure_mtp_gpios,
 	.factory_v255_regs = {
 		0x0b9,
-		0x0b8,
+		0x0b8,	
 		0x0fc,
 	},
 	.color_adj = {
@@ -364,16 +364,9 @@ struct s5p_panel_data herring_panel_data = {
 		 * Bx 0.14142, By 0.04258
 		 */
 		.mult = {
-			1939662560U,
-			1694245920U,
-			1974299520U,
-			//root2017941484Ux1870388960U,=1942764904U,
-			//root1765685903Ux1547112000U,=1652789717U,
-			//root1966603602Ux1974299520U,=1970447804U,
-			//	original   X voodoo	=new
-			//root1743387360Ux2335733255U,=2017941484U,
-			//root1535566240Ux2030291254U,=1765685903U,
-			//root1939662560Ux1993918842U,=1966603602U,
+			1879048192U,
+			1610612736U,
+			1845493760U,
 		},
 		.rshift = 31,
 	},

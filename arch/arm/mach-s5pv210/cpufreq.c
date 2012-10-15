@@ -32,7 +32,7 @@ static struct clk *dmc1_clk;
 static struct cpufreq_freqs freqs;
 static DEFINE_MUTEX(set_freq_lock);
 
-#define APLL_VAL_1200  	((1<<31)|(150<<16)|(3<<8)|(1))
+#define APLL_VAL_1200  	((1<<31)|(275<<16)|(6<<8)|(1))
 #define APLL_VAL_1000	((1<<31)|(125<<16)|(3<<8)|(1))
 #define APLL_VAL_800	((1<<31)|(100<<16)|(3<<8)|(1))
 
@@ -103,8 +103,8 @@ const unsigned long int_volt_max = 1300000;
 
 static struct s5pv210_dvs_conf dvs_conf[] = {
 	[L0] = {
-		.arm_volt   = 1350000,
-		.int_volt   = 1100000,
+		.arm_volt   = 1300000,
+		.int_volt   = 1150000,
 		},
 	[L1] = {
 		.arm_volt   = 1250000,
@@ -621,7 +621,7 @@ static struct freq_attr *s5pv210_cpufreq_attr[] = {
 	&cpufreq_freq_attr_scaling_available_freqs,
 	NULL,
 };
-/* dave */
+
 static struct cpufreq_driver s5pv210_driver = {
 	.flags		= CPUFREQ_STICKY,
 	.verify		= s5pv210_verify_speed,

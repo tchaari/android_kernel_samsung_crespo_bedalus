@@ -3182,11 +3182,11 @@ static s32 wl_cfg80211_suspend(struct wiphy *wiphy)
 		cfg80211_scan_done(wl->scan_request, true);
 		wl->scan_request = NULL;
 	}
+	spin_unlock_irqrestore(&wl->cfgdrv_lock, flags);
 	for_each_ndev(wl, iter, next) {
 		wl_clr_drv_status(wl, SCANNING, iter->ndev);
 		wl_clr_drv_status(wl, SCAN_ABORTING, iter->ndev);
 	}
-	spin_unlock_irqrestore(&wl->cfgdrv_lock, flags);
 	for_each_ndev(wl, iter, next) {
 		if (wl_get_drv_status(wl, CONNECTING, iter->ndev)) {
 			wl_bss_connect_done(wl, iter->ndev, NULL, NULL, false);
@@ -7394,7 +7394,6 @@ static s32 __wl_cfg80211_down(struct wl_priv *wl)
 		p2p_net->flags &= ~IFF_UP;
 	}
 #endif /* WL_ENABLE_P2P_IF */
-	spin_unlock_irqrestore(&wl->cfgdrv_lock, flags);
 
 	DNGL_FUNC(dhd_cfg80211_down, (wl));
 	wl_flush_eq(wl);

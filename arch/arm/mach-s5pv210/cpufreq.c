@@ -527,15 +527,11 @@ static const int num_freqs = sizeof(dvs_conf) / sizeof(struct s5pv210_dvs_conf);
 
 void customvoltage_updatearmvolt(unsigned long * arm_voltages)
 {
-    int i;
-
     mutex_lock(&set_freq_lock);
-
-    for (i = 0; i < num_freqs; i++) {
-	if (arm_voltages[i] > arm_volt_max)
-	    arm_voltages[i] = arm_volt_max;
-	dvs_conf[i].arm_volt = arm_voltages[i];
-    }
+	
+	if (arm_voltages[0] > arm_volt_max)
+	    arm_voltages[0] = arm_volt_max;
+	dvs_conf[0].arm_volt = arm_voltages[0];
 
     mutex_unlock(&set_freq_lock);
 
@@ -545,15 +541,11 @@ EXPORT_SYMBOL(customvoltage_updatearmvolt);
 
 void customvoltage_updateintvolt(unsigned long * int_voltages)
 {
-    int i;
-
     mutex_lock(&set_freq_lock);
 
-    for (i = 0; i < num_freqs; i++) {
-	if (int_voltages[i] > int_volt_max)
-	    int_voltages[i] = int_volt_max;
-	dvs_conf[i].int_volt = int_voltages[i];
-    }
+	if (int_voltages[0] > int_volt_max)
+	    int_voltages[0] = int_volt_max;
+	dvs_conf[0].int_volt = int_voltages[0];
 
     mutex_unlock(&set_freq_lock);
 

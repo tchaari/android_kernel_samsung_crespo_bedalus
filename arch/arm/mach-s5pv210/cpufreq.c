@@ -32,7 +32,7 @@ static struct clk *dmc1_clk;
 static struct cpufreq_freqs freqs;
 static DEFINE_MUTEX(set_freq_lock);
 
-#define APLL_VAL_1200  	((1<<31)|(150<<16)|(3<<8)|(1))
+#define APLL_VAL_1200  	((1<<31)|(137<<16)|(3<<8)|(1))
 #define APLL_VAL_1000	((1<<31)|(125<<16)|(3<<8)|(1))
 #define APLL_VAL_800	((1<<31)|(100<<16)|(3<<8)|(1))
 
@@ -77,7 +77,7 @@ enum s5pv210_dmc_port {
 };
 
 static struct cpufreq_frequency_table s5pv210_freq_table[] = {
-	{L0, 1200*1000},
+	{L0, 1096*1000},
 	{L1, 1000*1000},
     {L2, 800*1000},
    	{L3, 400*1000},
@@ -104,7 +104,7 @@ const unsigned long int_volt_max = 1300000;
 static struct s5pv210_dvs_conf dvs_conf[] = {
 	[L0] = {
 		.arm_volt   = 1300000,
-		.int_volt   = 1125000,
+		.int_volt   = 1150000,
 		},
 	[L1] = {
 		.arm_volt   = 1250000,
@@ -133,8 +133,8 @@ static u32 clkdiv_val[6][11] = {
 	 * HCLK_DSYS, PCLK_DSYS, HCLK_PSYS, PCLK_PSYS, ONEDRAM,
 	 * MFC, G3D }
 	 */
-	/* L0 : [1200/200/200/100][166/83][133/66][200/200] */
-	{0, 5, 5, 1, 3, 1, 4, 1, 3, 0, 0},
+	/* L0 : [1096/200/200/100][166/83][133/66][200/200] i.e. morfic's T11 config*/
+	{0, 4, 4, 1, 3, 1, 4, 1, 3, 0, 0},
 	/* L1 : [1000/200/200/100][166/83][133/66][200/200] */
 	{0, 4, 4, 1, 3, 1, 4, 1, 3, 0, 0},
 	/* L2 : [800/200/200/100][166/83][133/66][200/200] */
@@ -275,7 +275,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		if (pll_changing)
 			s5pv210_set_refresh(DMC1, 83000);
 		else
-			s5pv210_set_refresh(DMC1, 100000);
+			s5pv210_set_refresh(DMC1, 110000); //raised due to 220MHz FSB
 
 		s5pv210_set_refresh(DMC0, 83000);
 	}
@@ -470,7 +470,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 			 * DMC1 : 200Mhz
 			 */
 			s5pv210_set_refresh(DMC0, 166000);
-			s5pv210_set_refresh(DMC1, 200000);
+			s5pv210_set_refresh(DMC1, 220000);
 		} else {
 			/*
 			 * DMC0 : 83Mhz

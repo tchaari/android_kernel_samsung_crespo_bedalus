@@ -265,6 +265,9 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	/* Check if there need to change System bus clock */
 	if ((index == L5) || (freqs.old == s5pv210_freq_table[L5].frequency))
 		bus_speed_changing = 1;
+	if ((index == L0) || (freqs.old == s5pv210_freq_table[L0].frequency))
+		bus_speed_changing = 1;
+	
 
 	if (bus_speed_changing) {
 		/*
@@ -275,8 +278,11 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		if (pll_changing)
 			s5pv210_set_refresh(DMC1, 83000);
 		else
-			s5pv210_set_refresh(DMC1, 110000); //raised due to 220MHz FSB
-
+		{
+			if (index != L0)
+				s5pv210_set_refresh(DMC1, 100000);
+			else 	s5pv210_set_refresh(DMC1, 110000); 
+		}
 		s5pv210_set_refresh(DMC0, 83000);
 	}
 
@@ -467,17 +473,19 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		if (index != L5) {
 			/*
 			 * DMC0 : 166Mhz
-			 * DMC1 : 220Mhz
+			 * DMC1 : 200MHz or 220Mhz if OC'ing to 1096MHz CPU (L0)
 			 */
 			s5pv210_set_refresh(DMC0, 166000);
-			s5pv210_set_refresh(DMC1, 220000);
+			if (index == L0)
+				s5pv210_set_refresh(DMC1, 220000); //raised 220MHz FSB
+			else  	s5pv210_set_refresh(DMC1, 200000); //Not OC'ing so keep 200MHz FSB
 		} else {
 			/*
 			 * DMC0 : 83Mhz
-			 * DMC1 : 110Mhz
+			 * DMC1 : 100Mhz
 			 */
 			s5pv210_set_refresh(DMC0, 83000);
-			s5pv210_set_refresh(DMC1, 110000); //should be half the bus fq.
+			s5pv210_set_refresh(DMC1, 100000); //should be half the bus fq.
 		}
 	}
 

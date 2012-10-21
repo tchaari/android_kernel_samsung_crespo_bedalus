@@ -32,7 +32,7 @@ static struct clk *dmc1_clk;
 static struct cpufreq_freqs freqs;
 static DEFINE_MUTEX(set_freq_lock);
 
-#define APLL_VAL_1200  	((1<<31)|(137<<16)|(3<<8)|(1))
+#define APLL_VAL_1096  	((1<<31)|(137<<16)|(3<<8)|(1))
 #define APLL_VAL_1000	((1<<31)|(125<<16)|(3<<8)|(1))
 #define APLL_VAL_800	((1<<31)|(100<<16)|(3<<8)|(1))
 
@@ -382,8 +382,8 @@ static int s5pv210_target(struct cpufreq_policy *policy,
                 
         switch ( index ) {
 		case L0:
-		/* APLL FOUT becomes 1200 Mhz */
-		__raw_writel(APLL_VAL_1200, S5P_APLL_CON);
+		/* APLL FOUT becomes 1096 Mhz */
+		__raw_writel(APLL_VAL_1096, S5P_APLL_CON);
 		break;            
 		
 		case L1:
@@ -467,17 +467,17 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		if (index != L5) {
 			/*
 			 * DMC0 : 166Mhz
-			 * DMC1 : 200Mhz
+			 * DMC1 : 220Mhz
 			 */
 			s5pv210_set_refresh(DMC0, 166000);
 			s5pv210_set_refresh(DMC1, 220000);
 		} else {
 			/*
 			 * DMC0 : 83Mhz
-			 * DMC1 : 100Mhz
+			 * DMC1 : 110Mhz
 			 */
 			s5pv210_set_refresh(DMC0, 83000);
-			s5pv210_set_refresh(DMC1, 100000);
+			s5pv210_set_refresh(DMC1, 110000); //should be half the bus fq.
 		}
 	}
 

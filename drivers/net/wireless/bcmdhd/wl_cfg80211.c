@@ -3193,6 +3193,7 @@ static s32 wl_cfg80211_suspend(struct wiphy *wiphy)
 		if (wl_get_drv_status(wl, CONNECTING, iter->ndev)) {
 			wl_bss_connect_done(wl, iter->ndev, NULL, NULL, false);
 		}
+
 	}
 #endif /* DHD_CLEAR_ON_SUSPEND */
 	return 0;
@@ -7408,6 +7409,7 @@ static s32 __wl_cfg80211_down(struct wl_priv *wl)
 		p2p_net->flags &= ~IFF_UP;
 	}
 #endif /* WL_ENABLE_P2P_IF */
+
 
 	DNGL_FUNC(dhd_cfg80211_down, (wl));
 	wl_flush_eq(wl);

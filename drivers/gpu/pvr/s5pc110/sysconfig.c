@@ -101,7 +101,7 @@ static int limit_adjust_cpufreq_notifier(struct notifier_block *nb,
 	static int policy_min = 100000;
 	static bool flipped = false;
 
-	if (event != CPUFREQ_ADJUST)
+	if ((event != CPUFREQ_ADJUST) && (flipped == false))
 		return 0;   // this bit seems to prevent my code from working
 
 	if (flipped == false)
@@ -546,7 +546,7 @@ PVRSRV_ERROR SysFinalise(IMG_VOID)
 #if defined(SUPPORT_ACTIVE_POWER_MANAGEMENT)
 	DisableSGXClocks();
 	cpufreq_register_notifier(&cpufreq_limit_notifier,
-				  CPUFREQ_TRANSITION_NOTIFIER);
+				  CPUFREQ_POLICY_NOTIFIER);
 #endif 
 
 	return PVRSRV_OK;
@@ -578,7 +578,7 @@ PVRSRV_ERROR SysDeinitialise (SYS_DATA *psSysData)
 #if defined(SUPPORT_ACTIVE_POWER_MANAGEMENT)
 	/* TODO: regulator and clk put. */
 	cpufreq_unregister_notifier(&cpufreq_limit_notifier,
-				    CPUFREQ_TRANSITION_NOTIFIER);
+				    CPUFREQ_POLICY_NOTIFIER);
 	cpufreq_update_policy(current_thread_info()->cpu);
 #endif
 

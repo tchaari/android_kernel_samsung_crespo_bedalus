@@ -294,7 +294,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 			s5pv210_set_refresh(DMC1, 83000);
 		else
 		{
-			if (index != L1)
+			if (index == L1)
 				s5pv210_set_refresh(DMC1, 110000);
 			else 	s5pv210_set_refresh(DMC1, 100000); 
 		}

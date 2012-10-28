@@ -107,7 +107,7 @@ const unsigned long int_volt_max = 1300000;
 static struct s5pv210_dvs_conf dvs_conf[] = {
 	[L0] = {
 		.arm_volt   = 1300000,
-		.int_volt   = 1150000,
+		.int_volt   = 1100000,
 		},
 	[L1] = {
 		.arm_volt   = 1300000,
@@ -494,7 +494,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		if (index != L6) {
 			/*
 			 * DMC0 : 166Mhz
-			 * DMC1 : 200MHz or 220Mhz if OC'ing to 1096MHz CPU (L0)
+			 * DMC1 : 200MHz or 220Mhz if OC'ing to 1096MHz CPU (L1)
 			 */
 			s5pv210_set_refresh(DMC0, 166000);
 			if (index == L1)

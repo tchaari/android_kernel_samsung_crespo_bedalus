@@ -276,11 +276,16 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 
 	/* Check if there need to change PLL */
 	if     ((index <= L2) || (freqs.old >= s5pv210_freq_table[L2].frequency))
-		pll_changing = 1;
+	{
+		if (((index == L1) && (freqs.old == s5pv210_freq_table[L0].frequency)) ||
+		    ((index == L0) && (freqs.old == s5pv210_freq_table[L1].frequency)))
+			pll_changing = 0;
+		else pll_changing = 1;
+	}
 
 	/* Check if there need to change System bus clock */
 	if 	((index == L6) || (freqs.old == s5pv210_freq_table[L6].frequency) ||
-	 	 (index == L1) || (freqs.old == s5pv210_freq_table[L1].frequency))
+		 (index == L1) || (freqs.old == s5pv210_freq_table[L2].frequency))
 			bus_speed_changing = 1;
 
 	if (bus_speed_changing) {
@@ -291,12 +296,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		 */
 		if (pll_changing)
 			s5pv210_set_refresh(DMC1, 83000);
-		else
-		{
-			if (index == L1)
-				s5pv210_set_refresh(DMC1, 110000);
-			else 	s5pv210_set_refresh(DMC1, 100000); 
-		}
+		else 	s5pv210_set_refresh(DMC1, 100000); 
 		s5pv210_set_refresh(DMC0, 83000);
 	}
 
@@ -505,7 +505,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 			 * DMC1 : 100Mhz
 			 */
 			s5pv210_set_refresh(DMC0, 83000);
-			s5pv210_set_refresh(DMC1, 100000); //should be half the bus fq.
+			s5pv210_set_refresh(DMC1, 100000);
 		}
 	}
 

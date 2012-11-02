@@ -24,11 +24,6 @@
 #endif
 #include "power.h"
 
-#ifdef CONFIG_S5P_IDLE2
-#include <mach/idle2.h>
-extern bool idle2_audio;
-#endif /* CONFIG_S5P_IDLE2 */
-
 enum {
 	DEBUG_EXIT_SUSPEND = 1U << 0,
 	DEBUG_WAKEUP = 1U << 1,
@@ -284,12 +279,7 @@ static void suspend(struct work_struct *work)
 			pr_info("suspend: abort suspend\n");
 		return;
 	}
-#ifdef CONFIG_S5P_IDLE2
-	if (idle2_audio==true) {
-		idle2_kill(1, 0);
-		pr_info("%s: idle2_kill(1, 0)\n", __func__);
-	}
-#endif
+
 	entry_event_num = current_event_num;
 	sys_sync();
 	if (debug_mask & DEBUG_SUSPEND)
@@ -323,12 +313,6 @@ static void suspend(struct work_struct *work)
 			pr_info("suspend: pm_suspend returned with no event\n");
 		wake_lock_timeout(&unknown_wakeup, HZ / 2);
 	}
-#ifdef CONFIG_S5P_IDLE2
-	if (idle2_audio==true) {
-		idle2_kill(0, 0);
-		pr_info("%s: idle2_kill(0, 0)\n", __func__);
-	}
-#endif
 }
 static DECLARE_WORK(suspend_work, suspend);
 

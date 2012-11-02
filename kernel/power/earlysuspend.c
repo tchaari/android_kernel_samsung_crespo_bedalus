@@ -15,6 +15,7 @@
  *
  */
 
+
 #include <linux/earlysuspend.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
@@ -24,12 +25,6 @@
 #include <linux/workqueue.h>
 
 #include "power.h"
-
-#ifdef CONFIG_S5P_IDLE2
-#include <mach/idle2.h>
-extern bool idle2_audio;
-#endif /* CONFIG_S5P_IDLE2 */
-
 
 enum {
 	DEBUG_USER_STATE = 1U << 0,
@@ -88,10 +83,6 @@ static void early_suspend(struct work_struct *work)
 	mutex_lock(&early_suspend_lock);
 	spin_lock_irqsave(&state_lock, irqflags);
 	if (state == SUSPEND_REQUESTED) {
-#ifdef CONFIG_S5P_IDLE2
-		if (idle2_audio==true)
-		earlysuspend_active_fn(true);
-#endif
 		state |= SUSPENDED;
 	}
 	else
@@ -114,6 +105,7 @@ static void early_suspend(struct work_struct *work)
 			pos->suspend(pos);
 		}
 	}
+
 	mutex_unlock(&early_suspend_lock);
 
 	if (debug_mask & DEBUG_SUSPEND)
@@ -136,10 +128,6 @@ static void late_resume(struct work_struct *work)
 	mutex_lock(&early_suspend_lock);
 	spin_lock_irqsave(&state_lock, irqflags);
 	if (state == SUSPENDED) {
-#ifdef CONFIG_S5P_IDLE2
-		if (idle2_audio==true)
-		earlysuspend_active_fn(false);
-#endif
 		state &= ~SUSPENDED;
 	}
 	else

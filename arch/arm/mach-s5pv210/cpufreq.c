@@ -245,12 +245,14 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	if (freqs.new == freqs.old)
 		goto out;
 
-	/* If 1.2GHz is selected, prevent 1.1GHz 
-	   for users who don't want FSB OC */
-	if ((index == L1) && (policy->user_policy.max == 1200000))
+	/* If we select OC, prevent 1GHz */
+	if (index <= L2)
 	{
-		index = L0;
-		freqs.new = s5pv210_freq_table[index].frequency;
+		if (policy->user_policy.max == 1100000)
+			index = L1;
+		if ((index == L1) && (policy->user_policy.max == 1200000))
+			index = L0;
+		freqs.new = s5pv210_freq_table[index].frequency;		
 	}
 
 	arm_volt = dvs_conf[index].arm_volt;
@@ -275,16 +277,10 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 
 	/* Check if there need to change PLL */
 	if     ((index <= L2) || (freqs.old >= s5pv210_freq_table[L2].frequency))
-	{
-		if (((index == L1) && (freqs.old == s5pv210_freq_table[L0].frequency)) ||
-		    ((index == L0) && (freqs.old == s5pv210_freq_table[L1].frequency)))
-			pll_changing = 0;
-		else pll_changing = 1;
-	}
+		pll_changing = 1;
 
 	/* Check if there need to change System bus clock */
-	if 	((index == L6) || (freqs.old == s5pv210_freq_table[L6].frequency) ||
-		 (index == L1) || (freqs.old == s5pv210_freq_table[L1].frequency))
+	if 	((index == L6) || (freqs.old == s5pv210_freq_table[L6].frequency))
 			bus_speed_changing = 1;
 
 	if (bus_speed_changing) {
@@ -471,9 +467,14 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		 * Others : DMC1 = 200Mhz 7.8us/(1/200) = 0x618
 		 */
 		if (!bus_speed_changing)
-			s5pv210_set_refresh(DMC1, 200000);
+		{
+			if (policy->user_policy.max == 1100000)
+			{
+				s5pv210_set_refresh(DMC1, 220000);
+			} //raised 220MHz FSB
+			else  	s5pv210_set_refresh(DMC1, 200000); //Not OC'ing so keep 200MHz FSB	}
+		}
 	}
-
 	/*
 	 * L6 level need to change memory bus speed, hence onedram clock divier
 	 * and memory refresh parameter should be changed
@@ -489,15 +490,21 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		} while (reg & (1 << 15));
 
 		/* Reconfigure DRAM refresh counter value */
-		if (index != L6) {
+		if (index != L6) 
+		{
 			/*
 			 * DMC0 : 166Mhz
 			 * DMC1 : 200MHz or 220Mhz if OC'ing to 1096MHz CPU (L1)
 			 */
 			s5pv210_set_refresh(DMC0, 166000);
-			if (index == L1)
+			if (policy->user_policy.max == 1100000)
+			{
 				s5pv210_set_refresh(DMC1, 220000); //raised 220MHz FSB
-			else  	s5pv210_set_refresh(DMC1, 200000); //Not OC'ing so keep 200MHz FSB
+			}
+			else
+			{
+				s5pv210_set_refresh(DMC1, 200000); //Not OC'ing so keep 200MHz FSB
+			}
 		} else {
 			/*
 			 * DMC0 : 83Mhz

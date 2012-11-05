@@ -266,6 +266,10 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 						    arm_volt, arm_volt_max);
 			if (ret)
 				goto out;
+			/* Increase voltages for FSB if 1.1GHz is selected */
+			if ((policy->user_policy.max == 1100000) && (index != L1) && (index != L6))
+			    int_volt += 50000;
+
 			ret = regulator_set_voltage(internal_regulator,
 						    int_volt, int_volt_max);
 			if (ret)

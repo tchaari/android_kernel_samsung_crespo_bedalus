@@ -258,6 +258,10 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	arm_volt = dvs_conf[index].arm_volt;
 	int_volt = dvs_conf[index].int_volt;
 
+	/* Increase voltages for FSB if 1.1GHz is selected */
+	if ((policy->user_policy.max == 1100000) && (index != L1) && (index != L6))
+	    int_volt += 50000;
+
 	if (freqs.new > freqs.old) {
 		/* Voltage up code: increase ARM first */
 		if (!IS_ERR_OR_NULL(arm_regulator) &&
@@ -266,9 +270,6 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 						    arm_volt, arm_volt_max);
 			if (ret)
 				goto out;
-			/* Increase voltages for FSB if 1.1GHz is selected */
-			if ((policy->user_policy.max == 1100000) && (index != L1) && (index != L6))
-			    int_volt += 50000;
 
 			ret = regulator_set_voltage(internal_regulator,
 						    int_volt, int_volt_max);
@@ -382,7 +383,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	reg = __raw_readl(S5P_ARM_MCS_CON);
 	reg &= ~0x3;
 	
-	if (index >= L5)
+	if (index > L5) //was >= L5 (also changed L5 3,3,0... to 3,3,1...)
 		reg |= 0x3;
 	else
 		reg |= 0x1;

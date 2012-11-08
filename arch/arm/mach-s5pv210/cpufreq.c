@@ -569,7 +569,7 @@ void customvoltage_updatearmvolt(unsigned long * arm_voltages)
 	int i;
 
 	mutex_lock(&set_freq_lock);
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < 3; i++) {
 		if (arm_voltages[i] > arm_volt_max)
 		    arm_voltages[i] = arm_volt_max;
 		dvs_conf[i].arm_volt = arm_voltages[i];
@@ -584,7 +584,7 @@ void customvoltage_updateintvolt(unsigned long * int_voltages)
 	int i;
 
 	mutex_lock(&set_freq_lock);
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < 2; i++) {  // only allow int volts for 1.1GHz and 1.2GHz
 		if (int_voltages[i] > int_volt_max)
 		    int_voltages[i] = int_volt_max;
 		dvs_conf[i].int_volt = int_voltages[i];

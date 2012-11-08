@@ -431,8 +431,12 @@ static struct s5pv210_cpufreq_voltage smdkc110_cpufreq_volt[] = {
 		.varm	= 1300000,
 		.vint	= 1100000,
 	}, {
+		.freq	= 1096000,
+		.varm	= 1300000,
+		.vint	= 1150000,
+	}, {
 		.freq	= 1000000,
-		.varm	= 1250000,
+		.varm	= 1275000,
 		.vint	= 1100000,
 	}, {
 		.freq	=  800000,
@@ -1099,7 +1103,7 @@ static struct max8998_platform_data max8998_pdata = {
 	.buck1_voltage4	= 950000,
 	.buck1_voltage3	= 1050000,
 	.buck1_voltage2	= 1200000,
-	.buck1_voltage1	= 1250000,
+	.buck1_voltage1	= 1275000,
 	.buck2_voltage2	= 1000000,
 	.buck2_voltage1	= 1100000,
 	.buck1_set1	= GPIO_BUCK_1_EN_A,

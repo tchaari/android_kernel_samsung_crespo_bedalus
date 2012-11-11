@@ -1321,7 +1321,6 @@ typedef struct wl_po {
 
 
 #define PM_OFF  0
-#define PM_MAX  1
 #define PM_FAST 2
 
 #define LISTEN_INTERVAL			10

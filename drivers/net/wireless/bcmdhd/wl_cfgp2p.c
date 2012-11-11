@@ -1750,7 +1750,7 @@ wl_cfgp2p_set_p2p_ps(struct wl_priv *wl, struct net_device *ndev, char* buf, int
 		}
 
 		if (legacy_ps != -1) {
-			s32 pm = legacy_ps ? PM_MAX : PM_OFF;
+			s32 pm = legacy_ps ? PM_FAST : PM_OFF;
 			ret = wldev_ioctl(wl_to_p2p_bss_ndev(wl, P2PAPI_BSSCFG_CONNECTION),
 				WLC_SET_PM, &pm, sizeof(pm), true);
 			if (unlikely(ret)) {

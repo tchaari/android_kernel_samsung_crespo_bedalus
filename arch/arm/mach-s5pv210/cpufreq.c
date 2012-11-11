@@ -383,7 +383,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	reg = __raw_readl(S5P_ARM_MCS_CON);
 	reg &= ~0x3;
 	
-	if (index > L5) //was >= L5 (also changed L5 3,3,0... to 3,3,1...)
+	if (index >= L5) 
 		reg |= 0x3;
 	else
 		reg |= 0x1;

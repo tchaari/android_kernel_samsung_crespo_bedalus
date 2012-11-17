@@ -102,7 +102,7 @@ static int fimc_change_fifo_position(struct fimc_control *ctrl,
 				     struct fimc_ctx *ctx) {
 	struct v4l2_rect fimd_rect;
 	struct fb_info *fbinfo;
-	struct s3cfb_window *win;
+//	struct s3cfb_window *win;
 	int ret = -1;
 
 	fbinfo = registered_fb[ctx->overlay.fb_id];
@@ -116,8 +116,8 @@ static int fimc_change_fifo_position(struct fimc_control *ctrl,
 	}
 
 	/* Update WIN position */
-	win->x = fimd_rect.left;
-	win->y = fimd_rect.top;
+//	win->x = fimd_rect.left;
+//	win->y = fimd_rect.top;
 
 	fbinfo->var.activate = FB_ACTIVATE_FORCE;
 	ret = fb_set_var(fbinfo, &fbinfo->var);

@@ -93,8 +93,8 @@
 static struct pci_driver sis630_driver;
 
 /* insmod parameters */
-static bool high_clock;
-static bool force;
+static int high_clock;
+static int force;
 module_param(high_clock, bool, 0);
 MODULE_PARM_DESC(high_clock, "Set Host Master Clock to 56KHz (default 14KHz).");
 module_param(force, bool, 0);

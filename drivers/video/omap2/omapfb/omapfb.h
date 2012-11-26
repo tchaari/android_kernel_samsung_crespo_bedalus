@@ -32,7 +32,7 @@
 #include <video/omapdss.h>
 
 #ifdef DEBUG
-extern bool omapfb_debug;
+extern unsigned int omapfb_debug;
 #define DBG(format, ...) \
 	do { \
 		if (omapfb_debug) \

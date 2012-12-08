@@ -2794,8 +2794,8 @@ err_unlock_free_utd:
 		rb_erase(&utd_entry->node, &uid_tag_data_tree);
 		kfree(utd_entry);
 	}
-	spin_unlock_bh(&uid_tag_data_tree_lock);
 err:
+	spin_unlock_bh(&uid_tag_data_tree_lock);
 	return res;
 }
 

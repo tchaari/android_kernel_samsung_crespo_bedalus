@@ -28,7 +28,7 @@
 #endif
 
 #ifdef DEBUG
-extern bool dss_debug;
+extern unsigned int dss_debug;
 #ifdef DSS_SUBSYS_NAME
 #define DSSDBG(format, ...) \
 	if (dss_debug) \

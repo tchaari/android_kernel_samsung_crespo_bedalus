@@ -303,16 +303,16 @@ MODULE_LICENSE("Dual BSD/GPL");
 static struct {
 	char		*file[FSG_MAX_LUNS];
 	char		*serial;
-	bool		ro[FSG_MAX_LUNS];
-	bool		nofua[FSG_MAX_LUNS];
+	int		ro[FSG_MAX_LUNS];
+	int		nofua[FSG_MAX_LUNS];
 	unsigned int	num_filenames;
 	unsigned int	num_ros;
 	unsigned int	num_nofuas;
 	unsigned int	nluns;
 
-	bool		removable;
-	bool		can_stall;
-	bool		cdrom;
+	int		removable;
+	int		can_stall;
+	int		cdrom;
 
 	char		*transport_parm;
 	char		*protocol_parm;

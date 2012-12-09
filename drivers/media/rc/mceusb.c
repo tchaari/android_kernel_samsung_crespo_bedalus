@@ -103,9 +103,9 @@
 
 /* module parameters */
 #ifdef CONFIG_USB_DEBUG
-static bool debug = 1;
+static int debug = 1;
 #else
-static bool debug;
+static int debug;
 #endif
 
 #define mce_dbg(dev, fmt, ...)					\

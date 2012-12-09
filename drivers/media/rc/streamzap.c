@@ -43,9 +43,9 @@
 #define DRIVER_DESC	"Streamzap Remote Control driver"
 
 #ifdef CONFIG_USB_DEBUG
-static bool debug = 1;
+static int debug = 1;
 #else
-static bool debug;
+static int debug;
 #endif
 
 #define USB_STREAMZAP_VENDOR_ID		0x0e9c

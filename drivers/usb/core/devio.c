@@ -91,7 +91,7 @@ struct async {
 	u8 bulk_status;
 };
 
-static bool usbfs_snoop;
+static int usbfs_snoop;
 module_param(usbfs_snoop, bool, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(usbfs_snoop, "true to log all usbfs traffic");
 

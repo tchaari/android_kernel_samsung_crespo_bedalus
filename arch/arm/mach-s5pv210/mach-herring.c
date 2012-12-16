@@ -101,6 +101,12 @@
 
 #include "herring.h"
 
+#if (herring_is_tft_dev())
+#define lcd_or_amoled_fq  60
+#else
+#define lcd_or_amoled_fq  52  //is amoled
+#endif
+
 struct class *sec_class;
 EXPORT_SYMBOL(sec_class);
 
@@ -298,8 +304,7 @@ static struct s3cfb_lcd s6e63m0 = {
 	.p_width = 52,
 	.p_height = 86,
 	.bpp = 24,
-	.freq = 60,
-
+	.freq = lcd_or_amoled_fq,
 	.timing = {
 		.h_fp = 16,
 		.h_bp = 16,
@@ -324,7 +329,7 @@ static struct s3cfb_lcd nt35580 = {
 	.p_width = 52,
 	.p_height = 86,
 	.bpp = 24,
-	.freq = 60,
+	.freq = lcd_or_amoled_fq,
 	.timing = {
 		.h_fp = 10,
 		.h_bp = 20,
@@ -349,7 +354,7 @@ static struct s3cfb_lcd r61408 = {
 	.p_width = 52,
 	.p_height = 86,
 	.bpp = 24,
-	.freq = 60,
+	.freq = lcd_or_amoled_fq,
 	.timing = {
 		.h_fp = 100,
 		.h_bp = 2,
@@ -427,8 +432,8 @@ static struct s5p_media_device herring_media_devs[] = {
 #ifdef CONFIG_CPU_FREQ
 static struct s5pv210_cpufreq_voltage smdkc110_cpufreq_volt[] = {
 	{
-		.freq	= 1200000,
-		.varm	= 1300000,
+		.freq	= 1320000,
+		.varm	= 1350000,
 		.vint	= 1100000,
 	}, {
 		.freq	= 1096000,

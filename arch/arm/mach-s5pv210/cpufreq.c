@@ -32,7 +32,7 @@ static struct clk *dmc1_clk;
 static struct cpufreq_freqs freqs;
 static DEFINE_MUTEX(set_freq_lock);
 
-#define APLL_VAL_1200    ((1<<31)|(150<<16)|(3<<8)|(1))
+#define APLL_VAL_1320    ((1<<31)|(165<<16)|(3<<8)|(1))
 #define APLL_VAL_1096  	((1<<31)|(137<<16)|(3<<8)|(1))
 #define APLL_VAL_1000	((1<<31)|(125<<16)|(3<<8)|(1))
 #define APLL_VAL_800	((1<<31)|(100<<16)|(3<<8)|(1))
@@ -78,7 +78,7 @@ enum s5pv210_dmc_port {
 };
 
 static struct cpufreq_frequency_table s5pv210_freq_table[] = {
-	{L0, 1200*1000},
+	{L0, 1320*1000},
 	{L1, 1096*1000},
 	{L2, 1000*1000},
 	{L3, 800*1000},
@@ -105,8 +105,8 @@ const unsigned long int_volt_max = 1300000;
 
 static struct s5pv210_dvs_conf dvs_conf[] = {
 	[L0] = {
-		.arm_volt   = 1300000,
-		.int_volt   = 1100000,
+		.arm_volt   = 1350000,
+		.int_volt   = 1150000,
 		},
 	[L1] = {
 		.arm_volt   = 1300000,
@@ -139,7 +139,7 @@ static u32 clkdiv_val[7][11] = {
 	 * HCLK_DSYS, PCLK_DSYS, HCLK_PSYS, PCLK_PSYS, ONEDRAM,
 	 * MFC, G3D }
 	 */
-	/* L0 : [1200/200/200/100][166/83][133/66][200/200] */
+	/* L0 : [1320/200/200/100][166/83][133/66][200/200] */
 	{0, 5, 5, 1, 3, 1, 4, 1, 3, 0, 0},
 	/* L1 : [1096/200/200/100][166/83][133/66][200/200] i.e. morfic's T11 config*/
 	{0, 4, 4, 1, 3, 1, 4, 1, 3, 0, 0},
@@ -246,12 +246,10 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		goto out;
 
 	/* If we select OC, prevent 1GHz */
-	if (index <= L2)
+	if (index == L2)
 	{
-		if (policy->user_policy.max == 1100000)
+		if (policy->user_policy.max >= 1100000)
 			index = L1;
-		if ((index == L1) && (policy->user_policy.max == 1200000))
-			index = L0;
 		freqs.new = s5pv210_freq_table[index].frequency;		
 	}
 
@@ -259,7 +257,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	int_volt = dvs_conf[index].int_volt;
 
 	/* Increase voltages for FSB if 1.1GHz is selected */
-	if ((policy->user_policy.max == 1100000) && (index != L1) && (index != L6))
+	if ((policy->user_policy.max >= 1100000) && (index != L0) && (index != L1) && (index !=L6))
 	    int_volt += 50000;
 
 	if (freqs.new > freqs.old) {
@@ -403,8 +401,8 @@ static int s5pv210_target(struct cpufreq_policy *policy,
         switch ( index ) {
 
 		case L0:
-		/* APLL FOUT becomes 1200 Mhz */
-		__raw_writel(APLL_VAL_1200, S5P_APLL_CON);
+		/* APLL FOUT becomes 1320 Mhz */
+		__raw_writel(APLL_VAL_1320, S5P_APLL_CON);
 		break;            
 
 		case L1:
@@ -473,11 +471,11 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 		 */
 		if (!bus_speed_changing)
 		{
-			if (policy->user_policy.max == 1100000)
+			if (policy->user_policy.max >= 1100000)
 			{
 				s5pv210_set_refresh(DMC1, 220000);
 			} //raised 220MHz FSB
-			else  	s5pv210_set_refresh(DMC1, 200000); //Not OC'ing so keep 200MHz FSB	}
+			else  	s5pv210_set_refresh(DMC1, 200000); //Not OC'ing so keep 200MHz FSB
 		}
 	}
 	/*
@@ -502,7 +500,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 			 * DMC1 : 200MHz or 220Mhz if OC'ing to 1096MHz CPU (L1)
 			 */
 			s5pv210_set_refresh(DMC0, 166000);
-			if (policy->user_policy.max == 1100000)
+			if (policy->user_policy.max >= 1100000)
 			{
 				s5pv210_set_refresh(DMC1, 220000); //raised 220MHz FSB
 			}

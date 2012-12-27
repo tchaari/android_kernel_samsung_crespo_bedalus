@@ -101,11 +101,7 @@
 
 #include "herring.h"
 
-#if (herring_is_tft_dev())
-#define lcd_or_amoled_fq  60
-#else
-#define lcd_or_amoled_fq  52  //is amoled
-#endif
+#define lcd_or_amoled_fq  56  //screen refresh rate
 
 struct class *sec_class;
 EXPORT_SYMBOL(sec_class);
@@ -150,13 +146,12 @@ static int herring_notifier_call(struct notifier_block *this,
 		else if (!strcmp((char *)_cmd, "bootloader"))
 			mode = REBOOT_MODE_FAST_BOOT;
 		else
-			mode = REBOOT_MODE_NONE;
+			mode = 9;
 	}
 	__raw_writel(mode, S5P_INFORM6);
 
 	return NOTIFY_DONE;
 }
-
 static struct notifier_block herring_reboot_notifier = {
 	.notifier_call = herring_notifier_call,
 };
@@ -375,8 +370,8 @@ static struct s3cfb_lcd r61408 = {
 
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 (5120 * SZ_1K)
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2 (5120 * SZ_1K)
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0 (13312 * SZ_1K) // (11Mb 11264) (13MB 13312) 
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1 (13312 * SZ_1K) // 11MB will work on Slim Bean
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0 (11264 * SZ_1K) // (11Mb 11264) (13MB 13312) 
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1 (11264 * SZ_1K) // 11MB will work on Slim Bean
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMD (S5PV210_LCD_WIDTH * \
 					     S5PV210_LCD_HEIGHT * 4 * \
 					     (CONFIG_FB_S3C_NR_BUFFERS + \

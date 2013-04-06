@@ -232,6 +232,7 @@
 #define S5PV210_UFSTAT_RXSHIFT	(0)
 
 #define NO_NEED_CHECK_CLKSRC	1
+struct uart_port;
 
 #ifndef __ASSEMBLY__
 

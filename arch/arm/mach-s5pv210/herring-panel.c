@@ -360,9 +360,9 @@ struct s5p_panel_data herring_panel_data = {
 		 * Bx 0.14142, By 0.04258
 		 */
 		.mult = {
-			2318372099U,
-			2117262806U,
-			1729744557U,
+			2335733255U,
+			2030291254U,
+			1993918842U,
 		},
 		.rshift = 31,
 	},
@@ -372,7 +372,7 @@ struct s5p_panel_data herring_panel_data = {
 	.gamma_table_size = ARRAY_SIZE(gamma_table),
 };
 
-static const u16 brightness_setting_table[] = {
+static u16 brightness_setting_table[] = {
 	0x051, 0x17f,
 	ENDDEF, 0x0000
 };
@@ -993,7 +993,7 @@ static const u16 R61408_SEQ_SLEEP_IN[] = {
 	ENDDEF, 0x0000
 };
 
-static const u16 R61408_brightness_setting_table[] = {
+static u16 R61408_brightness_setting_table[] = {
 	0xB0, 0x102,
 	0xB9, 0x100,
 	0x1F7, 0x102,

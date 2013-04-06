@@ -32,6 +32,9 @@
 #include <linux/irq.h>
 #include <linux/skbuff.h>
 #include <linux/console.h>
+#ifdef CONFIG_FORCE_FAST_CHARGE
+#include <linux/fastchg.h>
+#endif
 
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
@@ -185,7 +188,7 @@ static void gps_gpio_init(void)
 
 static void uart_switch_init(void)
 {
-	int ret;
+	int ret = 0;
 	struct device *uartswitch_dev;
 
 	uartswitch_dev = device_create(sec_class, NULL, 0, NULL, "uart_switch");
@@ -365,17 +368,16 @@ static struct s3cfb_lcd r61408 = {
 	},
 };
 
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 (6144 * SZ_1K)
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC1 (4 * SZ_1K)
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2 (6144 * SZ_1K)
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0 (36864 * SZ_1K)
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1 (36864 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0 (5120 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC2 (5120 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC0 (13312 * SZ_1K) // (11Mb 11264) (13MB 13312) 
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_MFC1 (13312 * SZ_1K) // 11MB will work on Slim Bean
 #define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMD (S5PV210_LCD_WIDTH * \
 					     S5PV210_LCD_HEIGHT * 4 * \
 					     (CONFIG_FB_S3C_NR_BUFFERS + \
 						 (CONFIG_FB_S3C_NUM_OVLY_WIN * \
 						  CONFIG_FB_S3C_NUM_BUF_OVLY_WIN)))
-#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_JPEG (8192 * SZ_1K)
+#define  S5PV210_VIDEO_SAMSUNG_MEMSIZE_JPEG (4096 * SZ_1K)
 
 static struct s5p_media_device herring_media_devs[] = {
 	[0] = {
@@ -397,13 +399,6 @@ static struct s5p_media_device herring_media_devs[] = {
 		.name = "fimc0",
 		.bank = 1,
 		.memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC0,
-		.paddr = 0,
-	},
-	[3] = {
-		.id = S5P_MDEV_FIMC1,
-		.name = "fimc1",
-		.bank = 1,
-		.memsize = S5PV210_VIDEO_SAMSUNG_MEMSIZE_FIMC1,
 		.paddr = 0,
 	},
 	[4] = {
@@ -432,6 +427,14 @@ static struct s5p_media_device herring_media_devs[] = {
 #ifdef CONFIG_CPU_FREQ
 static struct s5pv210_cpufreq_voltage smdkc110_cpufreq_volt[] = {
 	{
+		.freq	=  1320000,
+		.varm  = 1350000,
+		.vint	= 1100000,
+	}, {
+		.freq	= 1096000,
+		.varm	= 1300000,
+		.vint	= 1150000,
+	}, {
 		.freq	= 1000000,
 		.varm	= 1275000,
 		.vint	= 1100000,
@@ -2008,6 +2011,24 @@ static void touch_keypad_onoff(int onoff)
 		msleep(50);
 }
 
+static void touch_keypad_gpio_sleep(int onoff){
+	if(onoff == TOUCHKEY_ON){
+		/*
+		 * reconfigure gpio to activate touchkey controller vdd in sleep mode
+		 */
+		s3c_gpio_slp_cfgpin(_3_GPIO_TOUCH_EN, S3C_GPIO_SLP_OUT1);
+		//s3c_gpio_slp_setpull_updown(_3_GPIO_TOUCH_EN, S3C_GPIO_PULL_NONE);
+	} else {
+		/*
+		 * reconfigure gpio to deactivate touchkey vdd in sleep mode,
+		 * this is the default
+		 */
+		s3c_gpio_slp_cfgpin(_3_GPIO_TOUCH_EN, S3C_GPIO_SLP_OUT0);
+		//s3c_gpio_slp_setpull_updown(_3_GPIO_TOUCH_EN, S3C_GPIO_PULL_NONE);
+	}
+
+}
+
 static const int touch_keypad_code[] = {
 	KEY_MENU,
 	KEY_HOME,
@@ -2019,6 +2040,7 @@ static struct touchkey_platform_data touchkey_data = {
 	.keycode_cnt = ARRAY_SIZE(touch_keypad_code),
 	.keycode = touch_keypad_code,
 	.touchkey_onoff = touch_keypad_onoff,
+	.touchkey_sleep_onoff = touch_keypad_gpio_sleep,
 	.fw_name = "cypress-touchkey.bin",
 	.scl_pin = _3_TOUCH_SCL_28V,
 	.sda_pin = _3_TOUCH_SDA_28V,
@@ -2180,7 +2202,7 @@ static void s5k4ecgx_init(void)
 static int s5k4ecgx_ldo_en(bool en)
 {
 	int err = 0;
-	int result;
+	int result = 0;
 
 	if (IS_ERR_OR_NULL(cam_isp_core_regulator) ||
 		IS_ERR_OR_NULL(cam_isp_host_regulator) ||
@@ -2487,7 +2509,7 @@ static int s5ka3dfx_power_init(void)
 static int s5ka3dfx_power_on(void)
 {
 	int err = 0;
-	int result;
+	int result = 0;
 
 	if (s5ka3dfx_power_init()) {
 		pr_err("Failed to get all regulator\n");
@@ -2882,7 +2904,7 @@ static struct attribute_group herring_properties_attr_group = {
 static void herring_virtual_keys_init(void)
 {
 	struct kobject *properties_kobj;
-	int ret;
+	int ret= 0;
 
 	properties_kobj = kobject_create_and_add("board_properties", NULL);
 	if (properties_kobj)
@@ -2922,27 +2944,36 @@ static void k3g_irq_init(void)
 }
 
 
-static void fsa9480_usb_cb(bool attached)
-{
-	struct usb_gadget *gadget = platform_get_drvdata(&s3c_device_usbgadget);
-
-	if (gadget) {
-		if (attached)
-			usb_gadget_vbus_connect(gadget);
-		else
-			usb_gadget_vbus_disconnect(gadget);
-	}
-
-	set_cable_status = attached ? CABLE_TYPE_USB : CABLE_TYPE_NONE;
-	if (callbacks && callbacks->set_cable)
-		callbacks->set_cable(callbacks, set_cable_status);
-}
-
 static void fsa9480_charger_cb(bool attached)
 {
-	set_cable_status = attached ? CABLE_TYPE_AC : CABLE_TYPE_NONE;
-	if (callbacks && callbacks->set_cable)
-		callbacks->set_cable(callbacks, set_cable_status);
+        set_cable_status = attached ? CABLE_TYPE_AC : CABLE_TYPE_NONE;
+        if (callbacks && callbacks->set_cable)
+                callbacks->set_cable(callbacks, set_cable_status);
+}
+
+
+static void fsa9480_usb_cb(bool attached)
+{
+#ifdef CONFIG_FORCE_FAST_CHARGE
+	if (force_fast_charge != 0) {
+		fsa9480_charger_cb(attached);
+	} else {
+#endif
+		struct usb_gadget *gadget = platform_get_drvdata(&s3c_device_usbgadget);
+
+		if (gadget) {
+			if (attached)
+				usb_gadget_vbus_connect(gadget);
+			else
+				usb_gadget_vbus_disconnect(gadget);
+		}
+
+		set_cable_status = attached ? CABLE_TYPE_USB : CABLE_TYPE_NONE;
+		if (callbacks && callbacks->set_cable)
+			callbacks->set_cable(callbacks, set_cable_status);
+#ifdef CONFIG_FORCE_FAST_CHARGE
+	}
+#endif
 }
 
 static struct switch_dev switch_dock = {
@@ -2951,23 +2982,31 @@ static struct switch_dev switch_dock = {
 
 static void fsa9480_deskdock_cb(bool attached)
 {
-	struct usb_gadget *gadget = platform_get_drvdata(&s3c_device_usbgadget);
+#ifdef CONFIG_FORCE_FAST_CHARGE
+	if (force_fast_charge != 0) {
+	        fsa9480_charger_cb(attached);
+        } else {
+#endif
+		struct usb_gadget *gadget = platform_get_drvdata(&s3c_device_usbgadget);
 
-	if (attached)
-		switch_set_state(&switch_dock, 1);
-	else
-		switch_set_state(&switch_dock, 0);
-
-	if (gadget) {
 		if (attached)
-			usb_gadget_vbus_connect(gadget);
+			switch_set_state(&switch_dock, 1);
 		else
-			usb_gadget_vbus_disconnect(gadget);
-	}
+			switch_set_state(&switch_dock, 0);
 
-	set_cable_status = attached ? CABLE_TYPE_USB : CABLE_TYPE_NONE;
-	if (callbacks && callbacks->set_cable)
-		callbacks->set_cable(callbacks, set_cable_status);
+		if (gadget) {
+			if (attached)
+				usb_gadget_vbus_connect(gadget);
+			else
+				usb_gadget_vbus_disconnect(gadget);
+		}
+
+		set_cable_status = attached ? CABLE_TYPE_USB : CABLE_TYPE_NONE;
+		if (callbacks && callbacks->set_cable)
+			callbacks->set_cable(callbacks, set_cable_status);
+#ifdef CONFIG_FORCE_FAST_CHARGE
+	}
+#endif
 }
 
 static void fsa9480_cardock_cb(bool attached)
@@ -2980,7 +3019,7 @@ static void fsa9480_cardock_cb(bool attached)
 
 static void fsa9480_reset_cb(void)
 {
-	int ret;
+	int ret = 0;
 
 	/* for CarDock, DeskDock */
 	ret = switch_dev_register(&switch_dock);
@@ -6036,7 +6075,7 @@ MACHINE_START(HERRING, "herring")
 	.map_io		= herring_map_io,
 	.init_machine	= herring_machine_init,
 #ifdef CONFIG_S5P_HIGH_RES_TIMERS
-	.timer		= &s5p_systimer,
+	.timer		= &s5p_systimer_timer,
 #else
 	.timer		= &s5p_timer,
 #endif

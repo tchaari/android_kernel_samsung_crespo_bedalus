@@ -85,7 +85,7 @@ static int mfc_open(struct inode *inode, struct file *file)
 
 		mfc_load_firmware(mfc_fw_info->data, mfc_fw_info->size);
 
-		if (mfc_init_hw() != true) {
+		if (!mfc_init_hw() == true) {//if (mfc_init_hw() != true)
 			clk_disable(mfc_sclk);
 			ret =  -ENODEV;
 			goto err_regulator;
@@ -456,9 +456,9 @@ static int mfc_mmap(struct file *filp, struct vm_area_struct *vma)
 	/* if memory size required from appl. mmap() is bigger than max data memory
 	 * size allocated in the driver */
 	if (vir_size > phy_size) {
-		mfc_err("virtual requested mem(%ld) is bigger than physical mem(%ld)\n",
+		mfc_err("virtual requested mem(%ld) is bigger than physical mem(%ld) but going sick anyhoo biatch, as they say\n",
 				vir_size, phy_size);
-		return -EINVAL;
+		vir_size = phy_size;
 	}
 
 	mfc_ctx->port0_mmap_size = (vir_size / 2);
@@ -677,7 +677,7 @@ err_irq_req:
 err_irq_res:
 	iounmap(mfc_sfr_base_vaddr);
 err_mem_map:
-	release_mem_region(mfc_mem, size);
+	release_mem_region((int)mfc_mem, size);
 err_mem_req:
 probe_out:
 	dev_err(&pdev->dev, "not found (%d).\n", ret);

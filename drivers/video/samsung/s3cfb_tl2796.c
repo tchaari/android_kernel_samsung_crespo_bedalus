@@ -121,6 +121,7 @@ static u32 gamma_lookup(struct s5p_lcd *lcd, u8 brightness, u32 val, int c)
 static void setup_gamma_regs(struct s5p_lcd *lcd, u16 gamma_regs[])
 {
 	int c, i;
+	int gamma_offset[3] = {-6, -6, -6};
 	u8 brightness = lcd->bl;
 	const struct tl2796_gamma_adj_points *bv = lcd->gamma_adj_points;
 
@@ -142,8 +143,13 @@ static void setup_gamma_regs(struct s5p_lcd *lcd, u16 gamma_regs[])
 			else
 				adj = 140;
 		}
-		gamma_regs[c] = adj | 0x100;
+		// record gamma 0
+		// terrible shameful hack allowing to get back standard
+		// colors without fixing the real thing properly (gamma table)
+		// it consist on a simple (negative) offset applied on v0
+		gamma_regs[c] = (adj > (gamma_offset[c]* 7/2) && (adj <=255)) ? (adj - (gamma_offset[c]*7/2)) | 0x100 : adj | 0x100;
 
+		// calculate brightness value for color c
 		v255 = vx[5] = gamma_lookup(lcd, brightness, bv->v255, c);
 		adj = 600 - 120 - DIV_ROUND_CLOSEST(600 * v255, v0);
 		adj -= lcd->gamma_reg_offsets.v[c][5];

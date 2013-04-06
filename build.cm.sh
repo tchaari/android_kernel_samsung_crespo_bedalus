@@ -12,8 +12,12 @@
 # sh extract
 # cd ..
 
+git apply cm_ioctrl.patch
+
 # make
 make -j3
+
+git apply -R cm_ioctrl.patch
 
 # copy modules
 find ./ -type f -name '*.ko' -exec cp -f {} ../marmite_zip/system/modules \;
@@ -22,6 +26,6 @@ find ./ -type f -name '*.ko' -exec cp -f {} ../marmite_zip/system/modules \;
 cp -f arch/arm/boot/zImage ../marmite_zip/kernel/
 
 cd ../marmite_zip
-zip -r ../marmite.zip *
-mv ../marmite.zip ../../Documents_OSX/
+zip -r ../marmite_cm.zip *
+mv ../marmite_cm.zip ../../Documents_OSX/
 cd ../marmite

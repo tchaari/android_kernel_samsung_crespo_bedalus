@@ -1,0 +1,24 @@
+    echo -e "Making marmite zImage\n"
+    export PATH=$PATH:/opt/toolchain2/bin/
+    export ARCH=arm
+    export SUBARCH=arm
+    export CROSS_COMPILE=arm-zen-linux-gnueabi-
+
+# delete everything
+#rm -fR kernelinjector.oxp/structure.new/modules/*
+#rm -f kernelinjector.oxp/zImage.new/zImage
+
+# cd kernelinjector.oxp
+# sh extract
+# cd ..
+
+# make
+make -j3
+
+# copy modules
+find ./ -type f -name '*.ko' -exec cp -f {} ../ \;
+
+# copy zImage
+cp -f arch/arm/boot/zImage ../
+
+#gzip kernelinjector.oxp/structure.new/modules/* kernelinjector.oxp/structure.new/modules/mods.tar.gz

@@ -36,7 +36,7 @@
 #define MAX17040_CMD_LSB	0xFF
 
 #define MAX17040_DELAY		1000
-#define MAX17040_BATTERY_FULL	95
+#define MAX17040_BATTERY_FULL	100
 
 struct max17040_chip {
 	struct i2c_client		*client;
@@ -204,7 +204,7 @@ static void max17040_get_status(struct i2c_client *client)
 		chip->status = POWER_SUPPLY_STATUS_DISCHARGING;
 	}
 
-	if (chip->soc > MAX17040_BATTERY_FULL)
+	if (chip->soc >= MAX17040_BATTERY_FULL)
 		chip->status = POWER_SUPPLY_STATUS_FULL;
 }
 

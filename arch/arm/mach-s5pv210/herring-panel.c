@@ -163,7 +163,11 @@ static const struct tl2796_gamma_adj_points gamma_adj_points = {
 	.v255 = BV_255,
 };
 
+#ifdef CONFIG_FB_VOODOO
+struct gamma_entry gamma_table[] = {
+#else
 static const struct gamma_entry gamma_table[] = {
+#endif
 	{       BV_0, { 4200000, 4200000, 4200000, }, },
 	{          1, { 3994200, 4107600, 3910200, }, },
 	{ 0x00000400, { 3669486, 3738030, 3655093, }, },
@@ -350,7 +354,7 @@ struct s5p_panel_data herring_panel_data = {
 	.configure_mtp_gpios = configure_mtp_gpios,
 	.factory_v255_regs = {
 		0x0b9,
-		0x0b8,
+		0x0b8,	
 		0x0fc,
 	},
 	.color_adj = {
@@ -360,9 +364,9 @@ struct s5p_panel_data herring_panel_data = {
 		 * Bx 0.14142, By 0.04258
 		 */
 		.mult = {
-			2335733255U,
-			2030291254U,
-			1993918842U,
+			2013265920U,
+			1619001344U,
+			1996488704U,
 		},
 		.rshift = 31,
 	},

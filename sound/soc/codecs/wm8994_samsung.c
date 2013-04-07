@@ -42,6 +42,10 @@
 #include "wm8994_samsung.h"
 #include "../../../arch/arm/mach-s5pv210/herring.h"
 
+#ifdef CONFIG_SND_VOODOO
+#include "wm8994_voodoo.h"
+#endif
+
 #define WM8994_VERSION "0.1"
 #define SUBJECT "wm8994_samsung.c"
 
@@ -176,6 +180,10 @@ int wm8994_write(struct snd_soc_codec *codec, unsigned int reg,
 {
 	u8 data[4];
 	int ret;
+
+#ifdef CONFIG_SND_VOODOO
+	value = voodoo_hook_wm8994_write(codec, reg, value);
+#endif
 
 	/* data is
 	 * D15..D9 WM8993 register offset
@@ -749,7 +757,7 @@ static int configure_clock(struct snd_soc_codec *codec)
 	return 0;
 }
 
-static int wm8994_set_bias_level(struct snd_soc_codec *codec,
+/*static int wm8994_set_bias_level(struct snd_soc_codec *codec,
 				 enum snd_soc_bias_level level)
 {
 	DEBUG_LOG("");
@@ -757,7 +765,7 @@ static int wm8994_set_bias_level(struct snd_soc_codec *codec,
 	switch (level) {
 	case SND_SOC_BIAS_ON:
 	case SND_SOC_BIAS_PREPARE:
-		/* VMID=2*40k */
+		// VMID=2*40k 
 		snd_soc_update_bits(codec, WM8994_POWER_MANAGEMENT_1,
 				    WM8994_VMID_SEL_MASK, 0x2);
 		snd_soc_update_bits(codec, WM8994_POWER_MANAGEMENT_2,
@@ -766,7 +774,7 @@ static int wm8994_set_bias_level(struct snd_soc_codec *codec,
 
 	case SND_SOC_BIAS_STANDBY:
 		if (codec->dapm.bias_level == SND_SOC_BIAS_OFF) {
-			/* Bring up VMID with fast soft start */
+			// Bring up VMID with fast soft start 
 			snd_soc_update_bits(codec, WM8994_ANTIPOP_2,
 					    WM8994_STARTUP_BIAS_ENA |
 					    WM8994_VMID_BUF_ENA |
@@ -776,19 +784,19 @@ static int wm8994_set_bias_level(struct snd_soc_codec *codec,
 					    WM8994_VMID_BUF_ENA |
 					    WM8994_VMID_RAMP_MASK |
 					    WM8994_BIAS_SRC);
-			/* VMID=2*40k */
+			// VMID=2*40k 
 			snd_soc_update_bits(codec, WM8994_POWER_MANAGEMENT_1,
 					    WM8994_VMID_SEL_MASK |
 					    WM8994_BIAS_ENA,
 					    WM8994_BIAS_ENA | 0x2);
 
-			/* Switch to normal bias */
+			// Switch to normal bias
 			snd_soc_update_bits(codec, WM8994_ANTIPOP_2,
 					    WM8994_BIAS_SRC |
 					    WM8994_STARTUP_BIAS_ENA, 0);
 		}
 
-		/* VMID=2*240k */
+		// VMID=2*240k 
 		snd_soc_update_bits(codec, WM8994_POWER_MANAGEMENT_1,
 				    WM8994_VMID_SEL_MASK, 0x4);
 
@@ -808,7 +816,7 @@ static int wm8994_set_bias_level(struct snd_soc_codec *codec,
 	codec->dapm.bias_level = level;
 
 	return 0;
-}
+}*/
 
 static int wm8994_set_sysclk(struct snd_soc_dai *codec_dai,
 			     int clk_id, unsigned int freq, int dir)
@@ -1069,7 +1077,7 @@ static int wm8994_hw_params(struct snd_pcm_substream *substream,
 	return 0;
 }
 
-static int wm8994_digital_mute(struct snd_soc_dai *codec_dai, int mute)
+/*static int wm8994_digital_mute(struct snd_soc_dai *codec_dai, int mute)
 {
 	struct snd_soc_codec *codec = codec_dai->codec;
 	int mute_reg;
@@ -1094,7 +1102,7 @@ static int wm8994_digital_mute(struct snd_soc_dai *codec_dai, int mute)
 	snd_soc_update_bits(codec, mute_reg, WM8994_AIF1DAC1_MUTE, reg);
 
 	return 0;
-}
+}*/
 
 static int wm8994_startup(struct snd_pcm_substream *substream,
 			  struct snd_soc_dai *codec_dai)
@@ -2948,7 +2956,7 @@ static int wm8994_init(struct wm8994_priv *wm8994_private,
 card_err:
 	//snd_soc_free_pcms(wm8994_socdev);
 	//snd_soc_dapm_free(wm8994_socdev);
-pcm_err:
+//pcm_err:
 
 	return ret;
 }
@@ -3026,6 +3034,9 @@ static int wm8994_codec_probe(struct snd_soc_codec *codec)
 	//codec->dev = &i2c->dev;
 
 	ret = wm8994_init(wm8994_priv, pdata);
+#ifdef CONFIG_SND_VOODOO
+	voodoo_hook_wm8994_pcm_probe(codec);
+#endif
 	if (ret) {
 		dev_err(codec->dev, "failed to initialize WM8994\n");
 		goto err_init;

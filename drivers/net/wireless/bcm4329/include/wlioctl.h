@@ -859,8 +859,8 @@ typedef struct wl_ioctl {
 
 
 #define PM_OFF	0
-#define PM_MAX	1
-#define PM_FAST 2
+#define PM_MAX	2
+//#define PM_FAST 2
 
 #define LISTEN_INTERVAL			10
 

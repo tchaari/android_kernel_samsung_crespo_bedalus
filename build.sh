@@ -15,7 +15,7 @@
 git apply -R cm_ioctrl.patch
 
 # make
-make -j3
+make -j7
 
 # copy modules
 find ./ -type f -name '*.ko' -exec cp -f {} ../marmite_zip/system/modules \;

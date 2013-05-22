@@ -27,3 +27,5 @@ cd ../marmite_zip
 zip -r ../marmite.zip * > /dev/null 2>&1
 mv ../marmite.zip ../../Documents_OSX/
 cd ../marmite
+
+cp ./.config ./arch/arm/configs/slim_defconfig

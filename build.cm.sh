@@ -12,9 +12,12 @@
 # sh extract
 # cd ..
 
+rm ./.config
+
 git apply cm_ioctrl.patch
 
 # make
+make bedalus_defconfig
 make -j7
 
 # copy modules
@@ -27,3 +30,6 @@ cd ../marmite_zip
 zip -r ../marmite_cm.zip * > /dev/null 2>&1
 mv ../marmite_cm.zip ../../Documents_OSX/
 cd ../marmite
+
+cp ./.config ./arch/arm/configs/slim_defconfig
+rm ./.config
